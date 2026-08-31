@@ -1,4 +1,4 @@
-import { io, onlineUsers } from "../server.js";
+import { io, onlineUsers } from "../config/socket.js";
 import type { Request, Response } from "express";
 import { type QueryFilter, Types } from "mongoose";
 import type { MessageDocument } from "../models/Message.js";
@@ -6,12 +6,12 @@ import { Message } from "../models/Message.js";
 import { User } from "../models/User.js";
 import { CustomError } from "../utils/customError.js";
 import { StatusCodes } from "http-status-codes";
-import cloudinary from "../config/cloudinary.js";
 import {
   uploadBufferToCloudinary,
   deleteFromCloudinary,
 } from "../utils/cloudinaryUpload.js";
 import { getAttachmentType } from "../middleware/upload.js";
+import { Block } from "../models/Block.js";
 
 export const searchUsers = async (req: Request, res: Response) => {
   // get the logged in user id from the request object (set by the authentication middleware)
@@ -139,6 +139,20 @@ export const sendMessage = async (req: Request, res: Response) => {
   const receiverExists = await User.exists({ _id: receiverId });
   if (!receiverExists) {
     throw new CustomError("Receiver not found", StatusCodes.NOT_FOUND);
+  }
+
+  const isBlocked = await Block.exists({
+    $or: [
+      { blockerId: senderId, blockedId: receiverId },
+      { blockerId: receiverId, blockedId: senderId },
+    ],
+  });
+
+  if (isBlocked) {
+    throw new CustomError(
+      "unable to send a message to this user",
+      StatusCodes.FORBIDDEN,
+    );
   }
 
   let attachment: MessageDocument["attachment"];
@@ -401,4 +415,77 @@ export const updateMessage = async (req: Request, res: Response) => {
     io.to(receiverSocketId).emit("message:update", data);
   }
   res.status(StatusCodes.OK).json(message);
+};
+
+export const reactToMessage = async (req: Request, res: Response) => {
+  const loggedInUserId = req.user?._id;
+  const { id: messageId } = req.params;
+  const { emoji } = req.body;
+
+  if (!loggedInUserId) {
+    throw new CustomError("unauthorized", StatusCodes.UNAUTHORIZED);
+  }
+
+  if (typeof messageId !== "string" || Types.ObjectId.isValid(messageId)) {
+    throw new CustomError("invalid message id", StatusCodes.BAD_REQUEST);
+  }
+
+  if (!emoji || typeof emoji !== "string" || emoji.length > 8) {
+    throw new CustomError("invalid emoji", StatusCodes.BAD_REQUEST);
+  }
+
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    throw new CustomError("message not found", StatusCodes.NOT_FOUND);
+  }
+
+  const isParticipant =
+    message.senderId.equals(loggedInUserId) ||
+    message.receiverId.equals(loggedInUserId);
+
+  if (!isParticipant) {
+    throw new CustomError(
+      "Not authorized to react to this message",
+      StatusCodes.UNAUTHORIZED,
+    );
+  }
+
+  const existingIndex = message.reactions?.findIndex((r) =>
+    r.userId.equals(loggedInUserId),
+  );
+
+  const hasSameEmoji =
+    existingIndex !== undefined &&
+    existingIndex !== -1 &&
+    message.reactions?.[existingIndex]?.emoji === "emoji";
+
+  // remove any existing reaction from this user first (covers both the
+  // "replace" and "toggle off" cases)
+  if (existingIndex !== undefined && existingIndex !== -1) {
+    message.reactions?.splice(existingIndex, 1);
+  }
+
+  // only add the new one back if it wasn't a toggle-off
+  if (!hasSameEmoji) {
+    message.reactions?.push({ userId: loggedInUserId, emoji });
+  }
+
+  await message.save();
+
+  // notify whichever participant didn't perform this action
+  const otherUserId = message.senderId.equals(loggedInUserId)
+    ? message.receiverId
+    : message.senderId;
+  
+  const otherSocketId = onlineUsers.get(otherUserId.toString());
+
+  if(otherSocketId) {
+    io.to(otherSocketId).emit("message:reaction", {
+      messageId: message._id,
+      reactions: message.reactions,
+    })
+  }
+
+  res.status(StatusCodes.OK).json({ reactions: message.reactions });
 };

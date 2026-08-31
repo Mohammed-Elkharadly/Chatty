@@ -11,6 +11,9 @@ import {
   deleteAccount,
 } from "../controllers/userController.js";
 
+import { blockUser, unblockUser, getBlockedUsers } from '../controllers/blockController.js';
+
+
 const router = express.Router();
 
 // Everything below this line requires a valid JWT
@@ -26,5 +29,10 @@ router.patch(
 );
 router.post("/change-password", heavyLimiter, asyncHandler(changePassword));
 router.delete("/delete-account", asyncHandler(deleteAccount));
+
+
+router.post('/block/:id', asyncHandler(blockUser));
+router.delete('/block/:id', asyncHandler(unblockUser));
+router.get('/blocked', asyncHandler(getBlockedUsers));
 
 export default router;

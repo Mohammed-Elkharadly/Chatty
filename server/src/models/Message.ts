@@ -1,4 +1,5 @@
 import { Schema, model, Types, type HydratedDocument } from "mongoose";
+import { ref } from "node:process";
 
 interface IAttachment {
   url: string;
@@ -9,12 +10,18 @@ interface IAttachment {
   fileSize: number; // bytes
 }
 
+interface IReactions {
+  userId: Types.ObjectId;
+  emoji: string;
+}
+
 interface IMessage {
   senderId: Types.ObjectId;
   receiverId: Types.ObjectId;
   status: "sent" | "delivered" | "seen";
   content?: string;
   attachment?: IAttachment;
+  reactions: IReactions[];
 }
 
 export type MessageDocument = HydratedDocument<IMessage>;
@@ -34,6 +41,19 @@ const attachmentSchema = new Schema<IAttachment>(
   },
   { _id: false }, // embedded subdocument, doesn't need its own _id
 );
+
+const reactionSchema = new Schema<IReactions>({
+  userId: {
+    type: Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  emoji: {
+    type: String,
+    required: true,
+    maxLength: 8,
+  },
+});
 
 const messageSchema = new Schema<IMessage>(
   {
@@ -60,10 +80,14 @@ const messageSchema = new Schema<IMessage>(
       type: attachmentSchema,
       required: false,
     },
+    reactions: {
+      type: [reactionSchema],
+      default: [],
+    },
   },
   { timestamps: true },
 );
 
-messageSchema.index({ senderId: 1, receiverId: 1, createdAt: 1 })
+messageSchema.index({ senderId: 1, receiverId: 1, createdAt: 1 });
 
 export const Message = model<IMessage>("Message", messageSchema);

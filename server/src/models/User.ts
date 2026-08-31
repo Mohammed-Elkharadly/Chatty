@@ -107,15 +107,11 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
     },
     email: {
       type: String,
-      unique: true,
-      sparse: true, // allows multiple nulls
       lowercase: true,
       trim: true,
     },
     phone: {
       type: String,
-      unique: true,
-      sparse: true,
       trim: true,
     },
     password: {
@@ -205,10 +201,37 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
   },
 );
 
-// indexes - only for fields not already indexed via `unique: true`
+userSchema.index(
+  { email: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      email: { $type: "string" }, // only constrain docs that actually have an email (replaces sparse)
+      deletedAt: { $exists: false }, // exclude soft-deleted users, so their email can be reused
+    },
+  },
+);
+
+userSchema.index(
+  { phone: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      phone: { $type: "string" },
+      deletedAt: { $exists: false },
+    },
+  },
+);
+
 userSchema.index(
   { provider: 1, providerId: 1 },
-  { unique: true, partialFilterExpression: { providerId: { $exists: true } } },
+  {
+    unique: true,
+    partialFilterExpression: {
+      providerId: { $exists: true },
+      deletedAt: { $exists: false }, // same reasoning: a deleted OAuth account shouldn't block re-linking
+    },
+  },
 );
 userSchema.index({ verificationToken: 1 });
 userSchema.index({ resetPasswordToken: 1 });

@@ -10,6 +10,7 @@ import {
   markAsRead,
   updateMessage,
   deleteMessage,
+  reactToMessage
 } from "../controllers/messageController.js";
 const router = express.Router();
 
@@ -25,5 +26,6 @@ router.post("/send/:id", upload.single('attachment'), asyncHandler(sendMessage))
 router.patch("/read/:id", asyncHandler(markAsRead));
 router.patch("/:id", upload.single('attachment'), asyncHandler(updateMessage));
 router.delete("/:id", asyncHandler(deleteMessage));
+router.patch('/:id/react', asyncHandler(reactToMessage));
 
 export default router;
