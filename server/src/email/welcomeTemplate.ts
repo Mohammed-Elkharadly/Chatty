@@ -1,16 +1,21 @@
+// takes a raw string, replaces HTML special chars with their entity equivalents
+// prevents XSS: if a user registers with name "<script>alert('x')</script>",
+// without this it would execute as JavaScript when the email is rendered
 export function escapeHtml(str: string): string {
   return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/&/g, "&amp;") // & must go first (otherwise we'd double-encode the others)
+    .replace(/</g, "&lt;") // < → &lt; (prevents opening a new HTML tag)
+    .replace(/>/g, "&gt;") // > → &gt; (prevents closing a tag early)
+    .replace(/"/g, "&quot;") // " → &quot; (prevents breaking out of an attribute)
+    .replace(/'/g, "&#039;"); // ' → &#039; (prevents breaking out of a JS string)
 }
 
 export function createWelcomeEmailTemplate(
   name: string,
   clientURL: string,
 ): string {
+  // sanitize the user's name before inserting it into the HTML
+  // if name = '"><img src=x onerror=alert(1)>' → becomes harmless text in the email
   const safeName = escapeHtml(name);
 
   return `

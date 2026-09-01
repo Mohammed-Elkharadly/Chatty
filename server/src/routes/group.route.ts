@@ -2,7 +2,7 @@ import express from "express";
 import asyncHandler from "express-async-handler";
 import { verifyJwt } from "../middleware/verifyJwt.js";
 import { upload } from '../middleware/upload.js';
-
+import { strictLimiter } from "../middleware/limiters.js";
 import {
   createGroup,
   getMyGroups,
@@ -31,23 +31,28 @@ import {
 const router = express.Router();
 router.use(verifyJwt); // every group route requires auth
 
-router.post("/", asyncHandler(createGroup));
+
+router.get("/join-requests/mine", asyncHandler(getMyJoinRequests));
+router.patch("/join-requests/:id", asyncHandler(respondToJoinRequest));
+
+// group CRUD
+router.post("/", strictLimiter, asyncHandler(createGroup));
 router.get("/", asyncHandler(getMyGroups));
 router.get("/:id/members", asyncHandler(getGroupMembers));
 router.delete("/:id/members/:memberId", asyncHandler(removeMember));
 router.post("/:id/leave", asyncHandler(leaveGroup));
 router.delete("/:id", asyncHandler(deleteGroup));
 
-router.post("/:id/invite", asyncHandler(inviteToGroup)); // admin invites a user
-router.post("/:id/request", asyncHandler(requestToJoin)); // user requests to join
-router.get("/:id/requests", asyncHandler(getPendingRequestsForGroup)); // admin views pending requests
-router.get("/join-requests/mine", asyncHandler(getMyJoinRequests)); // my own invites/requests
-router.patch("/join-requests/:id", asyncHandler(respondToJoinRequest)); // accept/reject
+// join flow
+router.post("/:id/invite", strictLimiter, asyncHandler(inviteToGroup));
+router.post("/:id/request", asyncHandler(requestToJoin));
+router.get("/:id/requests", asyncHandler(getPendingRequestsForGroup));
 
-router.post('/:id/messages', upload.single('attachment'), asyncHandler(sendGroupMessage));
-router.get('/:id/messages', asyncHandler(getGroupMessages));
-router.patch('/:id/messages/read', asyncHandler(markGroupMessagesRead));
-router.patch('/:id/messages/:messageId/react', asyncHandler(reactToGroupMessage));
-router.delete('/:id/messages/:messageId', asyncHandler(deleteGroupMessage));
+// messages
+router.post("/:id/messages", upload.single("attachment"), asyncHandler(sendGroupMessage));
+router.get("/:id/messages", asyncHandler(getGroupMessages));
+router.patch("/:id/messages/read", asyncHandler(markGroupMessagesRead));
+router.patch("/:id/messages/:messageId/react", asyncHandler(reactToGroupMessage));
+router.delete("/:id/messages/:messageId", asyncHandler(deleteGroupMessage));
 
 export default router;

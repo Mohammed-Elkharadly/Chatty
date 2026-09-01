@@ -21,15 +21,17 @@ import {
 
 const router = express.Router();
 
-// Authentication attempts (public)
-router.post("/signup", asyncHandler(signup));
+// --- Authentication (public) ---
+//  added strictLimiter to prevent account spam
+router.post("/signup", strictLimiter, asyncHandler(signup));
 router.post("/login", loginLimiter, asyncHandler(login));
 router.post("/oauth/login", loginLimiter, asyncHandler(oAuthLogin));
 
-// Token refresh (public — the refresh token itself is the credential)
-router.post("/refresh-token", asyncHandler(refreshToken));
+// --- Token refresh (public — the refresh token cookie is the credential) ---
+//  added strictLimiter to prevent rotation spam
+router.post("/refresh-token", strictLimiter, asyncHandler(refreshToken));
 
-// Email verification (public)
+// --- Email verification (public) ---
 router.get("/verify-email/:token", strictLimiter, asyncHandler(verifyEmail));
 router.post("/verify-email", strictLimiter, asyncHandler(verifyEmail));
 router.post(
@@ -38,19 +40,19 @@ router.post(
   asyncHandler(resendVerification),
 );
 
-// Password reset flow (public)
+// --- Password reset flow (public) ---
 router.post(
   "/forgot-password",
   accountRecoveryLimiter,
   asyncHandler(forgotPassword),
 );
 
-// GET → redirects browser to frontend form page
-// POST → performs the actual reset (called by frontend form)
-router.get("/reset-password/:token", heavyLimiter, asyncHandler(resetPassword));
+// GET → redirects browser to frontend form page (no sensitive action, limiter optional)
+router.get("/reset-password/:token", asyncHandler(resetPassword));
+// POST → performs the actual reset
 router.post("/reset-password", heavyLimiter, asyncHandler(resetPassword));
 
-// OTP flow (public)
+// --- OTP flow (public) ---
 router.post("/otp/send", heavyLimiter, asyncHandler(sendOtp));
 router.post("/otp/verify", strictLimiter, asyncHandler(verifyOtp));
 

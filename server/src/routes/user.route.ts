@@ -23,15 +23,15 @@ router.get("/check-auth", asyncHandler(checkAuth));
 router.post("/logout", asyncHandler(logout));
 router.patch(
   "/update-profile",
-  upload.single("avatar"),
   strictLimiter,
+  upload.single("avatar"),
   asyncHandler(updateProfile),
 );
 router.post("/change-password", heavyLimiter, asyncHandler(changePassword));
 router.delete("/delete-account", asyncHandler(deleteAccount));
 
 
-router.post('/block/:id', asyncHandler(blockUser));
+router.post('/block/:id', strictLimiter, asyncHandler(blockUser));
 router.delete('/block/:id', asyncHandler(unblockUser));
 router.get('/blocked', asyncHandler(getBlockedUsers));
 

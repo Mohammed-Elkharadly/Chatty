@@ -1,4 +1,4 @@
-import { io, onlineUsers } from "../config/socket.js";
+import { getSocketsForUser, io, onlineUsers } from "../config/socket.js";
 import type { Request, Response } from "express";
 import { type QueryFilter, Types } from "mongoose";
 import type { MessageDocument } from "../models/Message.js";
@@ -208,7 +208,7 @@ export const sendMessage = async (req: Request, res: Response) => {
   ]);
 
   // emit to receiver if online
-  const receiverSocketId = onlineUsers.get(receiverId.toString());
+  const receiverSocketId = getSocketsForUser(receiverId.toString());
   if (receiverSocketId) {
     io.to(receiverSocketId).emit("message:new", populateMessage);
   }
@@ -280,7 +280,7 @@ export const markAsRead = async (req: Request, res: Response) => {
   );
 
   // emit to sender that their message were read
-  const senderSocketId = onlineUsers.get(senderObjectId.toString());
+  const senderSocketId = getSocketsForUser(senderObjectId.toString());
   if (senderSocketId) {
     io.to(senderSocketId).emit("messages:read", { by: loggedInUserId });
   }
@@ -328,7 +328,7 @@ export const deleteMessage = async (req: Request, res: Response) => {
   await message.deleteOne();
 
   // notify receiver if online
-  const receiverSocketId = onlineUsers.get(message.receiverId.toString());
+  const receiverSocketId = getSocketsForUser(message.receiverId.toString());
   if (receiverSocketId) {
     io.to(receiverSocketId).emit("message:delete", { messageId });
   }
@@ -405,7 +405,7 @@ export const updateMessage = async (req: Request, res: Response) => {
     );
   }
 
-  const receiverSocketId = onlineUsers.get(message.receiverId.toString());
+  const receiverSocketId = getSocketsForUser(message.receiverId.toString());
   if (receiverSocketId) {
     const data = {
       _id: message._id,
@@ -477,8 +477,9 @@ export const reactToMessage = async (req: Request, res: Response) => {
   const otherUserId = message.senderId.equals(loggedInUserId)
     ? message.receiverId
     : message.senderId;
+
   
-  const otherSocketId = onlineUsers.get(otherUserId.toString());
+  const otherSocketId = getSocketsForUser(otherUserId.toString());
 
   if(otherSocketId) {
     io.to(otherSocketId).emit("message:reaction", {

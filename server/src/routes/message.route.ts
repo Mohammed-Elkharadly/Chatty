@@ -2,6 +2,7 @@ import express from "express";
 import { verifyJwt } from "../middleware/verifyJwt.js";
 import { upload } from "../middleware/upload.js";
 import asyncHandler from "express-async-handler";
+import { strictLimiter } from "../middleware/limiters.js";
 import {
   searchUsers,
   getAllChats,
@@ -22,7 +23,7 @@ router.get("/:id", asyncHandler(getMessageByUserId));
 
 // upload.single('attachment') parses multipart/form-data, populates
 // req.file (the attachment) and req.body (any other text fields, e.g. content)
-router.post("/send/:id", upload.single('attachment'), asyncHandler(sendMessage));
+router.post("/send/:id", strictLimiter, upload.single('attachment'), asyncHandler(sendMessage));
 router.patch("/read/:id", asyncHandler(markAsRead));
 router.patch("/:id", upload.single('attachment'), asyncHandler(updateMessage));
 router.delete("/:id", asyncHandler(deleteMessage));

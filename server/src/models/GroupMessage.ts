@@ -1,36 +1,41 @@
 import { Schema, model, Types, type HydratedDocument } from "mongoose";
 
+// shape of a file attachment (same as in Message model)
 interface IAttachment {
-  url: string;
-  publicId: string;
+  url: string;         // Cloudinary URL
+  publicId: string;    // Cloudinary ID (for deletion)
   type: "image" | "video" | "audio" | "pdf" | "document";
-  mimeType: string;
-  fileName: string;
-  fileSize: number;
+  mimeType: string;    // original MIME type
+  fileName: string;    // original filename
+  fileSize: number;    // bytes
 }
 
+// shape of a single reaction (who + which emoji)
 interface IReaction {
-  userId: Types.ObjectId;
-  emoji: string;
+  userId: Types.ObjectId; // who reacted
+  emoji: string;          // the emoji 
 }
 
+// shape of a single read receipt (who read it + when)
 interface IReadReceipt {
-  userId: Types.ObjectId;
-  readAt: Date;
+  userId: Types.ObjectId; // which member read the message
+  readAt: Date;           // when they read it
 }
 
+// the shape of a group message document
 interface IGroupMessage {
-  groupId: Types.ObjectId;
-  senderId: Types.ObjectId;
-  content?: string;
-  attachment?: IAttachment;
-  reactions?: IReaction[];
-  readBy?: IReadReceipt[]; // per-recipient read tracking — a group has many
-  // readers, so a single status field (like 1:1 Message) doesn't work here
+  groupId: Types.ObjectId;   // which group this message belongs to
+  senderId: Types.ObjectId;  // who sent it
+  content?: string;          // text body (optional if attachment-only)
+  attachment?: IAttachment;  // embedded file info (optional)
+  reactions?: IReaction[];   // who reacted with what
+  readBy?: IReadReceipt[];   // per-member read tracking (a group has many readers)
 }
 
+// the type Mongoose gives you when you query a group message
 export type GroupMessageDocument = HydratedDocument<IGroupMessage>;
 
+// sub-schema for the attachment field (embedded, no own _id)
 const attachmentSchema = new Schema<IAttachment>(
   {
     url: { type: String, required: true },
@@ -47,6 +52,7 @@ const attachmentSchema = new Schema<IAttachment>(
   { _id: false },
 );
 
+// sub-schema for a single reaction
 const reactionSchema = new Schema<IReaction>(
   {
     userId: { type: Types.ObjectId, ref: "User", required: true },
@@ -55,6 +61,7 @@ const reactionSchema = new Schema<IReaction>(
   { _id: false },
 );
 
+// sub-schema for a single read receipt (one per member who read the message)
 const readReceiptSchema = new Schema<IReadReceipt>(
   {
     userId: { type: Types.ObjectId, ref: "User", required: true },
@@ -63,21 +70,33 @@ const readReceiptSchema = new Schema<IReadReceipt>(
   { _id: false },
 );
 
+// the main group message schema
 const groupMessageSchema = new Schema<IGroupMessage>(
   {
+    // which group this message belongs to
     groupId: { type: Types.ObjectId, ref: "Group", required: true },
+    // who sent it
     senderId: { type: Types.ObjectId, ref: "User", required: true },
+    // text body (max 2000 chars)
     content: { type: String, maxLength: 2000 },
+    // optional embedded attachment
     attachment: { type: attachmentSchema, required: false },
+    // array of reactions (empty by default)
     reactions: { type: [reactionSchema], default: [] },
+    // array of read receipts — each member who opens the chat adds their entry here
     readBy: { type: [readReceiptSchema], default: [] },
   },
-  { timestamps: true },
+  {
+    // auto-adds createdAt + updatedAt
+    timestamps: true,
+  },
 );
 
-groupMessageSchema.index({ groupId: 1, createdAt: 1 }); // paginate a group's history
+// speeds up "get all messages in this group, newest first"
+groupMessageSchema.index({ groupId: 1, createdAt: -1 });
 
+// registers the model
 export const GroupMessage = model<IGroupMessage>(
   "GroupMessage",
   groupMessageSchema,
-);
+);   
