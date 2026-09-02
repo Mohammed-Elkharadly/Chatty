@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { Types } from "mongoose";
 import { Block } from "../models/Block.js";
+import { User } from "../models/User.js";
 import { StatusCodes } from "http-status-codes";
 import { CustomError } from "../utils/customError.js";
 
@@ -61,21 +62,27 @@ export const unblockUser = async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({ message: "user unblocked" });
 };
 
-// handles: GET /api/user/blocked — returns the list of users I've blocked
+// handles: GET /api/users/blocked — returns the list of users I've blocked
 export const getBlockedUsers = async (req: Request, res: Response) => {
+  // my _id (attached by verifyJwt middleware)
   const blockerId = req.user?._id;
 
+  // if no user is logged in, reject
   if (!blockerId) {
     throw new CustomError("unauthorized", StatusCodes.UNAUTHORIZED);
   }
 
-  // get all block records where I'm the blocker → array of blockedId ObjectIds
+  // find all Block records where I'm the blocker → gives me an array of blocked User IDs
   const blocks = await Block.find({ blockerId }).select("blockedId");
+
+  // extract just the ObjectId values (strip the { blockedId: ... } wrapper)
   const blockedIds = blocks.map((b) => b.blockedId);
 
-  const blockedUsers = await Block.find({ _id: { $in: blockedIds } }).select(
-    "name email avatar",
+  // use those IDs to fetch the actual User docs (name, email, avatar)
+  const blockedUsers = await User.find({ _id: { $in: blockedIds } }).select(
+    "name email phone avatar",
   );
 
+  // send the result to the client
   res.status(StatusCodes.OK).json({ users: blockedUsers });
 };   
