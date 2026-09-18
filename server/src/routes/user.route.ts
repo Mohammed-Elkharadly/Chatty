@@ -9,6 +9,7 @@ import {
   updateProfile,
   changePassword,
   deleteAccount,
+  notifications,
 } from "../controllers/userController.js";
 
 import { blockUser, unblockUser, getBlockedUsers } from '../controllers/blockController.js';
@@ -34,5 +35,7 @@ router.delete("/delete-account", asyncHandler(deleteAccount));
 router.post('/block/:id', strictLimiter, asyncHandler(blockUser));
 router.delete('/block/:id', asyncHandler(unblockUser));
 router.get('/blocked', asyncHandler(getBlockedUsers));
+
+router.post("/fcm-token", asyncHandler(notifications));
 
 export default router;

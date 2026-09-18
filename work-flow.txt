@@ -1,0 +1,80 @@
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         YOU PUSH CODE TO GITHUB (main)                          │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    GITHUB ACTIONS (ci.yml) TRIGGERS                             │
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐    │
+│  │  JOB: client (runs-on: ubuntu-latest)                                   │    │
+│  │                                                                         │    │
+│  │  1. actions/checkout@v4          ← clones your repo                     │    │
+│  │  2. actions/setup-node@v4        ← installs Node 22                     │    │
+│  │  3. npm ci                       ← installs frontend deps               │    │
+│  │  4. npm run lint                 ← ESLint check                         │    │
+│  │  5. npm run build                ← Vite bundles → client/dist/          │    │
+│  │                                                                         │    │
+│  │  ⚡ NO DOCKER STEP HERE — Vercel builds from source, not from image    │    │
+│  └─────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────┐    │
+│  │  JOB: server (runs-on: ubuntu-latest)                                   │    │
+│  │                                                                         │    │
+│  │  1. actions/checkout@v4          ← clones your repo                     │    │
+│  │  2. actions/setup-node@v4        ← installs Node 22                     │    │
+│  │  3. npm ci                       ← installs backend deps                │    │
+│  │  4. npm run build                ← tsc → server/dist/                   │    │
+│  │  5. npm test (non-blocking)      ← runs Jest (if any)                   │    │
+│  │                                                                         │    │
+│  │  6. docker/setup-buildx-action@v3  ← enables build cache                │    │
+│  │  7. docker/login-action@v4       ← logs into GHCR                       │    │
+│  │  8. docker/build-push-action@v6  ← builds image FROM Dockerfile         │    │
+│  │       │                                                                  │    │
+│  │       │  docker build:                                                   │    │
+│  │       │    FROM node:22-alpine                                          │    │
+│  │       │    COPY server/ .                                               │    │
+│  │       │    RUN npm ci && npm run build                                  │    │
+│  │       │    CMD ["node", "dist/index.js"]                                │    │
+│  │       │                                                                  │    │
+│  │       ▼                                                                  │    │
+│  │  ┌──────────────────────────────────────────────┐                       │    │
+│  │  │  docker push ghcr.io/youruser/chatty:latest  │                       │    │
+│  │  └──────────────────────────────────────────────┘                       │    │
+│  └─────────────────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                              │
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+┌──────────────────────────┐    ┌──────────────────────────────────┐
+│         GHCR             │    │         VERCEL                    │
+│  (ghcr.io)               │    │                                   │
+│                          │    │  Trigger: GitHub webhook          │
+│  Stores the pre-built    │    │  (or Git push directly)           │
+│  Docker image:           │    │                                   │
+│                          │    │  Vercel does:                     │
+│  ghcr.io/youruser/       │    │   1. clones your repo             │
+│    chatty:latest         │    │   2. runs: npm ci                 │
+│                          │    │   3. runs: npm run build          │
+│  (this is the "truck"    │    │   4. deploys client/dist/ to      │
+│   that delivers the      │    │      its global CDN (119+ edge)   │
+│   image to Render)       │    │                                   │
+│                          │    │  User hits: yourapp.vercel.app    │
+└────────────┬─────────────┘    └──────────────────────────────────┘
+             │
+             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                         RENDER                                   │
+│                                                                  │
+│  Trigger: "Deploy on new image" (watches GHCR tag)               │
+│                                                                  │
+│  Render does:                                                    │
+│   1. Pulls ghcr.io/youruser/chatty:latest                        │
+│   2. Spins up a container in its data center                     │
+│   3. Assigns: yourapp.onrender.com                               │
+│   4. Puts ITS OWN proxy in front (replaces your Nginx)           │
+│   5. Handles: HTTPS, restart, logs, scaling                      │
+│                                                                  │
+│  User hits: yourapp.onrender.com/api → your container            │
+└──────────────────────────────────────────────────────────────────┘   

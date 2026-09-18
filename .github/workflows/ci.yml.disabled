@@ -1,0 +1,91 @@
+# Workflow name shown in the Actions tab
+name: Chatty CI Pipeline
+
+# Runs this workflow when code is pushed or a PR is opened
+on:
+  push:
+    branches: [main] # only runs on pushes to main
+  pull_request:
+    branches: [main] # only runs on PRs targeting main
+
+# Grants this workflow permission to read the repo and push Docker images to GHCR
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  client:
+    # runs this job on a fresh Ubuntu virtual machine
+    runs-on: ubuntu-latest
+    # every "run" step below executes inside the client/ folder by default
+    defaults:
+      run:
+        working-directory: client
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4 # downloads your repo's code onto the runner so later steps can access it
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22 # Node major version to install on the runner
+          cache: npm # caches npm dependencies between runs, so future installs are faster
+          cache-dependency-path: client/package-lock.json # tells the cache step which lockfile to track
+
+      - name: Install dependencies
+        run: npm ci # installs dependencies exactly as locked in package-lock.json (deterministic)
+
+      - name: Lint
+        run: npm run lint # runs your lint script to catch code style/quality issues
+
+      - name: Build
+        run: npm run build # compiles/bundles the client app
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Tests (Non-blocking)
+        run: npm test
+        continue-on-error: true # lets the workflow keep going even if tests fail, instead of stopping the pipeline
+
+      # --- Docker ---
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3 # sets up an advanced Docker builder that supports caching and multi-platform builds
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io # which container registry to log into — GitHub's own registry
+          username: ${{ github.actor }} # the GitHub username that triggered this workflow run
+          password: ${{ secrets.GITHUB_TOKEN }} # a temporary token GitHub generates automatically for this run, used here as the login password
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: server # folder Docker uses as the build context — everything the Dockerfile can COPY from
+          file: server/Dockerfile # exact path to the Dockerfile to build
+          push: ${{ github.ref == 'refs/heads/main' }} # only actually pushes the image on main — PR runs just build, to verify it works, without publishing
+          tags: ghcr.io/${{ github.repository }}/server:latest # name and tag the built image gets pushed under
+          cache-from: type=gha # reuses layers cached from previous runs to speed up the build
+          cache-to: type=gha,mode=max # saves this run's layers back to the cache for next time

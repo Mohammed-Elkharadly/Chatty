@@ -57,6 +57,7 @@ export interface IUser {
   isActive: boolean; // false = deactivated/banned
   deletedAt?: Date | undefined; // soft-delete timestamp (for future "restore account")
   role: UserRole;
+  fcmToken?: string | undefined;
 }
 
 // custom methods attached to every user document
@@ -227,9 +228,14 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
       type: Boolean,
       default: true,
     },
+    fcmToken: {
+      type: String,
+      select: false,
+    },
     // if set, the account is "deleted" (soft-delete); the doc stays in DB but is excluded from indexes
     deletedAt: Date,
   },
+
   {
     // auto-adds createdAt + updatedAt to every document
     timestamps: true,

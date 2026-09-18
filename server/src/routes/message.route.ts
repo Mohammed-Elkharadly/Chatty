@@ -11,7 +11,8 @@ import {
   markAsRead,
   updateMessage,
   deleteMessage,
-  reactToMessage
+  reactToMessage,
+  searchMessages
 } from "../controllers/messageController.js";
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.use(verifyJwt);
 
 router.get("/search", asyncHandler(searchUsers));
 router.get("/chats", asyncHandler(getAllChats));
+router.get("/search/:id", asyncHandler(searchMessages));
 router.get("/:id", asyncHandler(getMessageByUserId));
 
 // upload.single('attachment') parses multipart/form-data, populates

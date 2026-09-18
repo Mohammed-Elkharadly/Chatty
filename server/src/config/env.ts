@@ -38,6 +38,10 @@ interface EnvConfig {
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
   GOOGLE_CLIENT_ID: string;
+  FIREBASE_PROJECT_ID: string;
+  FIREBASE_CLIENT_EMAIL: string;
+  FIREBASE_PRIVATE_KEY: string;
+  REDIS_URL: string;
 }
 
 export const ENV: EnvConfig = {
@@ -58,4 +62,8 @@ export const ENV: EnvConfig = {
   CLOUDINARY_API_KEY: String(requireEnvString("CLOUDINARY_API_KEY")),
   CLOUDINARY_API_SECRET: requireEnvString("CLOUDINARY_API_SECRET"),
   GOOGLE_CLIENT_ID: requireEnvString("GOOGLE_CLIENT_ID"),
+  FIREBASE_PROJECT_ID: requireEnvString("FIREBASE_PROJECT_ID"),
+  FIREBASE_CLIENT_EMAIL: requireEnvString("FIREBASE_CLIENT_EMAIL"),
+  FIREBASE_PRIVATE_KEY: requireEnvString("FIREBASE_PRIVATE_KEY"),
+  REDIS_URL: requireEnvString("REDIS_URL"),
 };

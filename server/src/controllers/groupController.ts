@@ -173,7 +173,7 @@ export const removeMember = async (req: Request, res: Response) => {
   await GroupMember.deleteOne({ groupId, userId: memberId });
 
   // notify the removed user's open tabs so they can leave the room + show a UI message
-  const socketIds = getSocketsForUser(memberId);
+  const socketIds = await getSocketsForUser(memberId);
   socketIds.forEach((id) => io.to(id).emit("group:removed", { groupId }));
 
   // respond with 200
@@ -217,7 +217,7 @@ export const leaveGroup = async (req: Request, res: Response) => {
   await GroupMember.deleteOne({ groupId, userId });
 
   // tell this user's open tabs to leave the room
-  const socketIds = getSocketsForUser(userId.toString());
+  const socketIds = await getSocketsForUser(userId.toString());
   socketIds.forEach((id) => io.to(id).emit("group:left", { groupId }));
 
   // respond with 200

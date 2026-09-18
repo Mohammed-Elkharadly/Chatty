@@ -79,7 +79,7 @@ export const inviteToGroup = async (req: Request, res: Response) => {
   }
 
   // if the invited user is online, notify them in real-time
-  const socketIds = getSocketsForUser(userId);
+  const socketIds = await getSocketsForUser(userId);
   socketIds.forEach((id) => io.to(id).emit("group:invite:new", { groupId }));
 
   // respond with 201
@@ -137,7 +137,7 @@ export const requestToJoin = async (req: Request, res: Response) => {
   }
 
   // if the admin is online, notify them there's a new join request
-  const adminSockets = getSocketsForUser(group.adminId.toString());
+  const adminSockets = await getSocketsForUser(group.adminId.toString());
   adminSockets.forEach((id) =>
     io.to(id).emit("group:request:new", { groupId, requestedBy: userId }),
   );
@@ -227,7 +227,7 @@ export const respondToJoinRequest = async (req: Request, res: Response) => {
     );
 
     // tell the newly-joined user's open tabs they're now in the group
-    const userSockets = getSocketsForUser(joinRequest.userId.toString());
+    const userSockets = await getSocketsForUser(joinRequest.userId.toString());
     userSockets.forEach((id) =>
       io.to(id).emit("group:joined", { groupId: joinRequest.groupId }),
     );
@@ -238,7 +238,7 @@ export const respondToJoinRequest = async (req: Request, res: Response) => {
     });
   } else {
     // notify the affected user
-    const userSockets = getSocketsForUser(joinRequest.userId.toString());
+    const userSockets = await getSocketsForUser(joinRequest.userId.toString());
     if (joinRequest.type === "invite") {
       // tell the invited user their invite was rejected
       userSockets.forEach((id) =>
@@ -247,7 +247,7 @@ export const respondToJoinRequest = async (req: Request, res: Response) => {
           .emit("group:invite:rejected", { groupId: joinRequest.groupId }),
       );
       // also tell the admin their invite was rejected
-      const adminSockets = getSocketsForUser(group.adminId.toString());
+      const adminSockets = await getSocketsForUser(group.adminId.toString());
       adminSockets.forEach((id) =>
         io.to(id).emit("group:invite:rejected:byUser", {
           groupId: joinRequest.groupId,

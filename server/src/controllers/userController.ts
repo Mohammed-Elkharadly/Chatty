@@ -204,7 +204,10 @@ export const deleteAccount = async (req: Request, res: Response) => {
     const { password } = req.body;
     // no password sent → can't confirm identity
     if (!password) {
-      throw new CustomError("password confirmation required to delete account", StatusCodes.BAD_REQUEST);
+      throw new CustomError(
+        "password confirmation required to delete account",
+        StatusCodes.BAD_REQUEST,
+      );
     }
     // compare the submitted password against the stored bcrypt hash
     const isMatch = await user.comparePassword(password);
@@ -227,7 +230,7 @@ export const deleteAccount = async (req: Request, res: Response) => {
 
   // respond with 200
   res.status(StatusCodes.OK).json({ message: "account deleted successfully" });
-};   
+};
 
 // handles: PUT /api/user/password — lets the user change their password (requires current password)
 export const changePassword = async (req: Request, res: Response) => {
@@ -236,12 +239,18 @@ export const changePassword = async (req: Request, res: Response) => {
 
   // both are required to proceed
   if (!currentPassword || !newPassword) {
-    throw new CustomError("current password and new password are required", StatusCodes.BAD_REQUEST);
+    throw new CustomError(
+      "current password and new password are required",
+      StatusCodes.BAD_REQUEST,
+    );
   }
 
   // enforce password strength on the new password (8+ chars, upper, lower, digit, special)
   if (!passRegEx.test(newPassword)) {
-    throw new CustomError("'Must contain uppercase, lowercase, number, and special character.", StatusCodes.BAD_REQUEST);
+    throw new CustomError(
+      "'Must contain uppercase, lowercase, number, and special character.",
+      StatusCodes.BAD_REQUEST,
+    );
   }
 
   // get the logged-in user's _id (attached by verifyJwt middleware)
@@ -272,4 +281,22 @@ export const changePassword = async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({
     message: "password changed successfully, please log in again",
   });
+};
+
+// stores the user's FCM device token (called once per device on app launch)
+export const notifications = async (req: Request, res: Response) => {
+  // my _id (set by auth middleware)
+  const userId = req.user?._id;
+  // the FCM token the client got from Firebase
+  const { fcmToken } = req.body;
+
+  // must be a non-empty string
+  if (!fcmToken || typeof fcmToken !== "string") {
+    throw new CustomError("fcmToken is required", StatusCodes.BAD_REQUEST);
+  }
+
+  // save it to the user doc
+  await User.findByIdAndUpdate(userId, { fcmToken });
+
+  res.status(200).json({ message: "Token stored" });
 };   

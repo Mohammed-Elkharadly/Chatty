@@ -1,5 +1,15 @@
 import type { Request, Response, NextFunction } from "express";
 import rateLimit, { ipKeyGenerator, type Options } from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import redisClient from "../config/redis.js";
+
+// shared store: all instances/pods read+write the same counters in Redis instead of local memory
+const createRedisStore = (prefix: string) =>
+  new RedisStore({
+    prefix,
+    sendCommand: (...args: string[]) =>
+      redisClient.call(...(args as [string, ...string[]])) as Promise<any>,
+  });
 
 // limits login attempts so one IP can't brute-force another user's account
 export const loginLimiter = rateLimit({
@@ -20,6 +30,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: true,
   // skip the old X-RateLimit-* headers
   legacyHeaders: false,
+  store: createRedisStore("rl:login:"),
   // builds the tracking key: "ip:identifier" so each account is tracked separately
   keyGenerator: (req: Request) => {
     // figure out WHO is being targeted (email, phone, or provider id)
@@ -41,6 +52,7 @@ export const accountRecoveryLimiter = rateLimit({
   message: { success: false, message: "Too many requests, slow down" },
   standardHeaders: true,
   legacyHeaders: false,
+  store: createRedisStore("rl:recovery:"),
   // no custom keyGenerator → defaults to IP-based (already IPv6-safe)
 });
 
@@ -51,6 +63,7 @@ export const strictLimiter = rateLimit({
   message: { success: false, message: "You're doing that too fast" },
   standardHeaders: true,
   legacyHeaders: false,
+  store: createRedisStore("rl:strict:"),
 });
 
 // for expensive actions (password reset, send email, AI) — 5 per IP per hour
@@ -60,4 +73,5 @@ export const heavyLimiter = rateLimit({
   message: { success: false, message: "Limit reached, try again later" },
   standardHeaders: true,
   legacyHeaders: false,
+  store: createRedisStore("rl:heavy:"),
 });

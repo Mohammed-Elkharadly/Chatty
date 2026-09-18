@@ -65,10 +65,12 @@ app.use(
 app.use(morgan(ENV.NODE_ENV === "production" ? "combined" : "dev"));
 
 // API routes
+app.get("/health", (req, res) => res.sendStatus(200));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
+
 
 // Serve static assets (JS, CSS, images) from Vite build output
 app.use(express.static(path.join(__dirname, "..", "..", "client", "dist")));

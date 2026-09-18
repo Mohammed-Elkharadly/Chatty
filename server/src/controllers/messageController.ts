@@ -1,4 +1,4 @@
-import { getSocketsForUser, io, onlineUsers } from "../config/socket.js";
+import { getSocketsForUser, io } from "../config/socket.js";
 import type { Request, Response } from "express";
 import { type QueryFilter, Types } from "mongoose";
 import type { MessageDocument } from "../models/Message.js";
@@ -12,6 +12,7 @@ import {
 } from "../utils/cloudinaryUpload.js";
 import { getAttachmentType } from "../middleware/upload.js";
 import { Block } from "../models/Block.js";
+import { messaging } from "../config/firebase.js";
 
 // searches for users by name, email, or phone (excludes self, max 10 results)
 export const searchUsers = async (req: Request, res: Response) => {
@@ -230,10 +231,30 @@ export const sendMessage = async (req: Request, res: Response) => {
 
   // if the recipient is online, push the message to their open tabs in real-time
   // getSocketsForUser returns an array, not a single string
-  const receiverSockets = getSocketsForUser(receiverId.toString());
-  receiverSockets.forEach((socketId) =>
-    io.to(socketId).emit("message:new", populateMessage),
-  );
+  const receiverSockets = await getSocketsForUser(receiverId.toString());
+
+  if (receiverSockets.length > 0) {
+    // user is online → socket handles it
+    receiverSockets.forEach((socketId) =>
+      io.to(socketId).emit("message:new", populateMessage),
+    );
+  } else {
+    // user is offline -> send a push notification via FCM
+    const receiver = await User.findById(receiverId).select("+fcmToken");
+    if (receiver?.fcmToken) {
+      await messaging.send({
+        token: receiver.fcmToken,
+        notification: {
+          title: "new message",
+          body: content?.substring(0, 20) || "new attachment",
+        },
+        data: {
+          messageId: newMessage._id.toString(),
+          type: "message"
+        }
+      });
+    }
+  }
 
   // also return it in the HTTP response (the sender's tab gets it immediately)
   res.status(StatusCodes.CREATED).json({ message: populateMessage });
@@ -329,7 +350,7 @@ export const markAsRead = async (req: Request, res: Response) => {
 
   // tell the sender's open tabs that their messages were read (so they see the double checkmark)
   // getSocketsForUser returns an array, not a single string
-  const senderSockets = getSocketsForUser(senderObjectId.toString());
+  const senderSockets = await getSocketsForUser(senderObjectId.toString());
   senderSockets.forEach((socketId) =>
     io.to(socketId).emit("messages:read", { by: loggedInUserId }),
   );
@@ -352,6 +373,7 @@ export const deleteMessage = async (req: Request, res: Response) => {
   if (typeof messageId !== "string" || !Types.ObjectId.isValid(messageId)) {
     throw new CustomError("Invalid message ID", StatusCodes.BAD_REQUEST);
   }
+  
   const messageObjectId = new Types.ObjectId(messageId);
 
   // fetch the message
@@ -388,7 +410,7 @@ export const deleteMessage = async (req: Request, res: Response) => {
 
   // tell the receiver's open tabs to remove this message from their UI
   // getSocketsForUser returns an array
-  const receiverSockets = getSocketsForUser(message.receiverId.toString());
+  const receiverSockets = await getSocketsForUser(message.receiverId.toString());
   receiverSockets.forEach((socketId) =>
     io.to(socketId).emit("message:delete", { messageId }),
   );
@@ -481,7 +503,7 @@ export const updateMessage = async (req: Request, res: Response) => {
 
   // tell the receiver's open tabs the message was edited
   // getSocketsForUser returns an array
-  const receiverSockets = getSocketsForUser(message.receiverId.toString());
+  const receiverSockets = await getSocketsForUser(message.receiverId.toString());
   receiverSockets.forEach((socketId) => {
     const data = {
       _id: message._id,
@@ -561,7 +583,7 @@ export const reactToMessage = async (req: Request, res: Response) => {
     ? message.receiverId
     : message.senderId;
 
-  const otherSockets = getSocketsForUser(otherUserId.toString());
+  const otherSockets = await getSocketsForUser(otherUserId.toString());
   otherSockets.forEach((id) =>
     io.to(id).emit("message:reaction", {
       messageId: message._id,
@@ -571,3 +593,39 @@ export const reactToMessage = async (req: Request, res: Response) => {
 
   res.status(StatusCodes.OK).json({ reactions: message.reactions });
 };
+
+// searches messages between me and another user by text content
+export const searchMessages = async (req: Request, res: Response) => {
+  // my _id (set by auth middleware)
+  const loggedInUserId = req.user?._id;
+  // the other person's _id (from URL param)
+  const { id: otherUserId } = req.params;
+  // the search term (e.g. "meeting tomorrow")
+  const query = req.query.q as string;
+
+  if (!loggedInUserId) {
+    throw new CustomError("Unauthorized", StatusCodes.UNAUTHORIZED);
+  }
+  if (typeof otherUserId !== "string" || !Types.ObjectId.isValid(otherUserId)) {
+    throw new CustomError("Invalid user ID", StatusCodes.BAD_REQUEST);
+  }
+  // must have a search term
+  if (!query || typeof query !== "string" || query.trim().length < 2) {
+    throw new CustomError("Search term must be at least 2 characters", StatusCodes.BAD_REQUEST);
+  }
+
+  const otherObjectId = new Types.ObjectId(otherUserId);
+
+  // search: must match the text AND be in our conversation (either direction)
+  const results = await Message.find({
+    $text: { $search: query.trim() },
+    $or: [
+      { senderId: loggedInUserId, receiverId: otherObjectId },
+      { senderId: otherObjectId, receiverId: loggedInUserId },
+    ],
+  })
+    .sort({ score: { $meta: "textScore" } }) // most relevant first
+    .limit(20);
+
+  res.status(StatusCodes.OK).json({ messages: results });
+};   
