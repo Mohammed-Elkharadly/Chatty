@@ -117,8 +117,10 @@ const startServer = async (): Promise<void> => {
 
 startServer();
 
-// graceful shutdown: stop accepting new connections, finish in-flight requests, then exit
+let isShuttingDown = false;
 const shutdown = async (signal: string) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
   console.log(`${signal} received, shutting down...`);
 
   // io.close() also closes the underlying HTTP server + disconnects all sockets

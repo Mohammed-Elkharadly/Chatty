@@ -34,7 +34,7 @@ const addPresence = async (
   const PRESENCE_TTL_SEC = 60 * 60 * 24;
   await redisClient.sadd(key, socketId);
   await redisClient.sadd(ONLINE_USER_IDS_KEY, userId);
-  await redisClient.expire(key, PRESENCE_TTL_SEC); 
+  await redisClient.expire(key, PRESENCE_TTL_SEC);
   return redisClient.smembers(ONLINE_USER_IDS_KEY);
 };
 
@@ -64,8 +64,8 @@ export const initSocketServer = (
     },
   });
 
-  const pubClient = redisClient.duplicate();
-  const localSubClient = redisClient.duplicate();
+  const pubClient = redisClient.duplicate(); // sends a message to a channel ("publish to chat")
+  const localSubClient = redisClient.duplicate(); // listens to a channel and gets every message pushed to it
 
   pubClient.on("error", (err) => console.error("Redis pubClient error:", err));
 
