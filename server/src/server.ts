@@ -71,7 +71,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
 
-
 // Serve static assets (JS, CSS, images) from Vite build output
 app.use(express.static(path.join(__dirname, "..", "..", "client", "dist")));
 
@@ -119,9 +118,19 @@ const startServer = async (): Promise<void> => {
 startServer();
 
 // graceful shutdown: stop accepting new connections, finish in-flight requests, then exit
-process.on("SIGTERM", () => {
+const shutdown = async (signal: string) => {
+  console.log(`${signal} received, shutting down...`);
+
+  // Give in-flight requests/sockets a moment, then exit
   httpServer.close(() => {
     console.log("Server closed");
     process.exit(0);
   });
-});
+
+  // Force-exit if graceful close hangs (5s)
+  setTimeout(() => process.exit(0), 5000).unref();
+};
+
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));
+process.on("SIGUSR2", () => void shutdown("SIGUSR2"));

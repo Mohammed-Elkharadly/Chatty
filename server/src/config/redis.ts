@@ -1,9 +1,10 @@
 import { Redis } from "ioredis";
-import { ENV } from "./env.js"; 
+import { ENV } from "./env.js";
 
 // single shared client instance — reused across rate limiter, socket adapter, presence, etc.
 export const redisClient = new Redis(ENV.REDIS_URL, {
-  maxRetriesPerRequest: null, // required by socket.io-redis-adapter, which manages its own retry logic
+  maxRetriesPerRequest: null, 
+  connectTimeout: 10000,
 });
 
 redisClient.on("connect", () => {

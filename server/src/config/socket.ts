@@ -6,163 +6,131 @@ import jwt from "jsonwebtoken";
 import { ENV } from "./env.js";
 import { GroupMember } from "../models/GroupMember.js";
 import redisClient from "./redis.js";
+import type { Redis } from "ioredis";
 
-// takes the raw cookie string from the browser, splits it, returns a clean { key: value } object
 const parseCookieHeader = (header: string): Record<string, string> => {
   const result: Record<string, string> = {};
-  // split by ';' to get each cookie pair
   header.split(";").forEach((pair) => {
-    // split each pair by '=' → first part is key, rest is value
     const [key, ...valueParts] = pair.trim().split("=");
-    // if no key (malformed), skip this pair
     if (!key) return;
-    // decode the value (browser encodes special chars)
     result[key] = decodeURIComponent(valueParts.join("="));
   });
   return result;
 };
 
-// only these two domains can connect to this socket server
 const ALLOWED_ORIGINS = [ENV.CLIENT_URL, ENV.SERVER_URL];
 
-// Redis key holding every socketId for a given user (their open tabs/devices)
 const presenceKey = (userId: string) => `presence:${userId}`;
-// Redis key holding the set of ALL userIds currently online, across every server instance
 const ONLINE_USER_IDS_KEY = "online_user_ids";
 
-// helper: gives you an array of socketIds for a user, or [] if they're offline
-// now async since it reads from Redis instead of local memory — shared truth across all instances
 export const getSocketsForUser = async (userId: string): Promise<string[]> =>
   redisClient.smembers(presenceKey(userId));
 
-// helper: registers a socket as belonging to userId, returns the full cross-instance online list
 const addPresence = async (
   userId: string,
   socketId: string,
 ): Promise<string[]> => {
-  // add this socket to the user's own set
-  await redisClient.sadd(presenceKey(userId), socketId);
-  // mark this user as online globally (no-op if already present)
+  const key = presenceKey(userId);
+  const PRESENCE_TTL_SEC = 60 * 60 * 24;
+  await redisClient.sadd(key, socketId);
   await redisClient.sadd(ONLINE_USER_IDS_KEY, userId);
-  // return the current full online list, seen by every instance, not just this one
+  await redisClient.expire(key, PRESENCE_TTL_SEC);
+  await redisClient.expire(ONLINE_USER_IDS_KEY, PRESENCE_TTL_SEC);
   return redisClient.smembers(ONLINE_USER_IDS_KEY);
 };
 
-// helper: removes a socket, and drops the user from the online set if that was their last one
-const removePresence = async (
-  userId: string,
-  socketId: string,
-): Promise<string[]> => {
-  // remove this specific socket from the user's set
+const removePresence = async (userId: string, socketId: string) => {
   await redisClient.srem(presenceKey(userId), socketId);
-  // check how many sockets this user has left (other tabs/devices, possibly on other instances)
   const remaining = await redisClient.scard(presenceKey(userId));
-  // no sockets left anywhere → fully offline, remove from the global online set
   if (remaining === 0) {
     await redisClient.srem(ONLINE_USER_IDS_KEY, userId);
+    return {
+      wentOffline: true,
+      onlineUserIds: await redisClient.smembers(ONLINE_USER_IDS_KEY),
+    };
   }
-  // return the current full online list
-  return redisClient.smembers(ONLINE_USER_IDS_KEY);
+  return { wentOffline: false, onlineUserIds: null };
 };
 
-// the socket server instance, set inside initSocketServer
-export let io: Server;
+export let io: Server | null = null;
+export let subClient: Redis | null = null;
 
-// main setup: creates the socket server and wires all logic
-export const initSocketServer = (httpServer: HttpServer): Server => {
-  // create the server, only allow our own domains to connect
-  io = new Server(httpServer, {
+export const initSocketServer = (
+  httpServer: HttpServer,
+): { io: Server; subClient: Redis } => {
+  const localIo = new Server(httpServer, {
     cors: {
       origin: ALLOWED_ORIGINS,
-      credentials: true, // lets the browser send the cookie with the socket handshake
+      credentials: true,
     },
   });
 
-  // subscriber must be a separate connection — a client in subscribe mode can't run other commands
-  const pubClient = redisClient;
-  const subClient = redisClient.duplicate();
-  // duplicate() doesn't inherit the original client's error listener — attach one or it crashes on error
-  subClient.on("error", (err) => {
-    console.error("Redis subClient error:", err);
-  });
-  // lets multiple server instances broadcast to sockets connected on OTHER instances
-  io.adapter(createAdapter(pubClient, subClient));
+  const pubClient = redisClient.duplicate();
+  const localSubClient = redisClient.duplicate();
 
-  // runs before every connection is accepted — checks if the user is logged in
-  io.use((socket, next) => {
+  pubClient.on("error", (err) => console.error("Redis pubClient error:", err));
+
+  localSubClient.on("error", (err) =>
+    console.error("Redis subClient error:", err),
+  );
+
+  localIo.adapter(createAdapter(pubClient, localSubClient));
+
+  localIo.use((socket, next) => {
     try {
-      // grab the raw cookie string from the handshake headers
       const rawCookies = socket.handshake.headers.cookie;
-      // if no cookie at all → reject
       if (!rawCookies) return next(new Error("Unauthorized"));
-
-      // turn the raw string into { accessToken: "...", ... }
       const parsed = parseCookieHeader(rawCookies);
       const accessToken = parsed.accessToken;
-      // cookie exists but no accessToken in it → reject
       if (!accessToken) return next(new Error("Unauthorized"));
-
-      // verify the token is real and not expired, get the userId out of it
       const decoded = jwt.verify(accessToken, ENV.JWT_SECRET_KEY) as {
         userId: string;
       };
-      // attach userId to the socket so we can use it later in handlers
       socket.data.userId = decoded.userId;
-      // token is valid → allow the connection
       next();
     } catch (error) {
-      // token expired or tampered → reject
       next(new Error("Unauthorized"));
     }
   });
 
-  // fires once the connection is accepted (user is authenticated)
-  io.on("connection", (socket) => {
-    // get the userId we attached during auth
+  localIo.on("connection", (socket) => {
     const userId = socket.data.userId as string;
 
-    // register this socket in Redis, get back the TRUE cross-instance online list
     addPresence(userId, socket.id)
       .then((onlineUserIds) => {
-        // tell everyone (on every instance, via the adapter) the online list changed
-        io.emit("users:online", onlineUserIds);
+        localIo.emit("users:online", onlineUserIds);
       })
       .catch((error) => console.error("addPresence failed:", error));
 
-    // client says "I want to listen to this group's messages"
     socket.on("group:join", async (groupId: string) => {
       try {
-        //  THIS IS THE ONLY NEW LINE — reject garbage strings before hitting the DB
         if (!Types.ObjectId.isValid(groupId)) return;
-
-        // check if this user is actually a member of that group
         const isMember = await GroupMember.exists({ groupId, userId });
-        // if not a member, do nothing (silently ignore)
         if (!isMember) return;
-        // join the room → now this socket will receive messages sent to `group:${groupId}`
         socket.join(`group:${groupId}`);
       } catch (error) {
         console.error("group:join failed:", error);
       }
     });
 
-    // client says "I'm leaving this group" (e.g. navigated away)
     socket.on("group:leave", (groupId: string) => {
-      // stop receiving messages for that group
       socket.leave(`group:${groupId}`);
     });
 
-    // user disconnected (closed tab, lost wifi, etc.)
     socket.on("disconnect", () => {
-      // remove this socket from Redis, get back the TRUE cross-instance online list
       removePresence(userId, socket.id)
-        .then((onlineUserIds) => {
-          // tell everyone the online list changed
-          io.emit("users:online", onlineUserIds);
+        .then(({ wentOffline, onlineUserIds }) => {
+          if (wentOffline) {
+            localIo.emit("users:online", onlineUserIds);
+          }
         })
-        .catch((error) => console.error("removePresence failed:", error));
+        .catch((error) => console.error("failed to remove presence", error));
     });
   });
 
-  return io;
+  // Assign to exports only after successful setup
+  io = localIo;
+  subClient = localSubClient;
+
+  return { io: localIo, subClient: localSubClient };
 };
