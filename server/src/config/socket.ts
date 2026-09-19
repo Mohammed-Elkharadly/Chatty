@@ -34,8 +34,7 @@ const addPresence = async (
   const PRESENCE_TTL_SEC = 60 * 60 * 24;
   await redisClient.sadd(key, socketId);
   await redisClient.sadd(ONLINE_USER_IDS_KEY, userId);
-  await redisClient.expire(key, PRESENCE_TTL_SEC);
-  await redisClient.expire(ONLINE_USER_IDS_KEY, PRESENCE_TTL_SEC);
+  await redisClient.expire(key, PRESENCE_TTL_SEC); 
   return redisClient.smembers(ONLINE_USER_IDS_KEY);
 };
 

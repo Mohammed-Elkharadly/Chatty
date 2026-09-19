@@ -12,7 +12,7 @@ import groupRoutes from "./routes/group.route.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { ENV } from "./config/env.js";
 import { connectDB } from "./config/db.js";
-import { initSocketServer } from "./config/socket.js";
+import { initSocketServer, io } from "./config/socket.js";
 import cron from "node-cron";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -121,11 +121,12 @@ startServer();
 const shutdown = async (signal: string) => {
   console.log(`${signal} received, shutting down...`);
 
-  // Give in-flight requests/sockets a moment, then exit
-  httpServer.close(() => {
-    console.log("Server closed");
-    process.exit(0);
-  });
+  // io.close() also closes the underlying HTTP server + disconnects all sockets
+  if (io) {
+    io.close();
+  } else {
+    httpServer.close();
+  }
 
   // Force-exit if graceful close hangs (5s)
   setTimeout(() => process.exit(0), 5000).unref();
