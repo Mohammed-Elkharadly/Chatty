@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type SubmitEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useLoginUserMutation } from '../features/auth/api/authApi';
+import { useLoginUserMutation } from '../features/auth/authEndpoints';
 import toast from 'react-hot-toast';
 
 const LoginPage = () => {

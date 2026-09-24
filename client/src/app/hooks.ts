@@ -5,9 +5,8 @@ import {
 } from 'react-redux';
 import type { AppDispatch, RootState } from './store';
 
-// Create a typed version of useDispatch
-// This hook knows what actions are valid in our app
-// Gives autocomplete and type checking for dispatch
+// useAppDispatch: A ready-to-use dispatch that already knows our store's types.
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 
+// useAppSelector: A ready-to-use selector that autocompletes our state for us.
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

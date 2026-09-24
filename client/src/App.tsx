@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { useCheckAuthQuery } from './features/auth/api/authApi';
+import { useCheckAuthQuery } from './features/auth/authEndpoints';
 import Layout from './components/Layout';
 import ChatPage from './pages/ChatPage';
 import SignupPage from './pages/SignupPage';

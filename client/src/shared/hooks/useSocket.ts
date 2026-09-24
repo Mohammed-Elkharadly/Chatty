@@ -8,15 +8,15 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
   setOnlineUsers,
   unReadMessage,
-} from '../../features/users/slices/usersSlice';
+} from '../../features/users/usersSlice';
 import {
   addMessage,
   markMessagesAsRead,
   removeMessage,
   editMessage,
-} from '../../features/messages/slices/messageSlice';
+} from '../../features/messages/messageSlice';
 import socket from '../socket';
-import type { Message } from '../../features/messages/types/message.types';
+import type { Message } from '../../features/messages/message.types';
 
 const useSocket = () => {
   const dispatch = useAppDispatch();

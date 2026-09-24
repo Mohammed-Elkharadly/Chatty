@@ -5,9 +5,9 @@ import {
   useGetMessagesQuery,
   useSendMessageMutation,
   useMarkAsReadMutation,
-} from '../features/messages/api/messageApi';
-import { clearUnRead } from '../features/users/slices/usersSlice';
-import { setMessages } from '../features/messages/slices/messageSlice';
+} from '../features/messages/messageEndpoints';
+import { clearUnRead } from '../features/users/usersSlice';
+import { setMessages } from '../features/messages/messageSlice';
 import ChatHeader from './chat/ChatHeader';
 import ChatMessages from './chat/ChatMessages';
 import ChatInput from './chat/ChatInput';
@@ -51,7 +51,7 @@ const ChatPage = () => {
       markAsRead(selectedContact?._id);
       dispatch(clearUnRead(selectedContact?._id));
     }
-  }, [messages, selectedContact?._id, markAsRead, clearUnRead, dispatch]);
+  }, [messages, selectedContact?._id, markAsRead, dispatch, selectedContact]);
 
   useEffect(() => {
     inputRef.current?.focus();

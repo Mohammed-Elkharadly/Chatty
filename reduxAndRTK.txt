@@ -1,0 +1,423 @@
+================================================================================
+                          two paths, one store
+                path a: local/ui state  |  path b: server state
+                (createslice, manual)   |  (rtk query, auto-cache)
+================================================================================
+
+
+                                ┌────────────────────┐
+                                │     ui (react)     │
+                                │                    │
+                                │  usedispatch()     │
+                                │  useselector()     │
+                                │  usegetxquery()    │
+                                └──┬──────┬──────┬───┘
+                                   │      │      │
+                    dispatch ──────┘      │      └────── hook
+                                          │
+                                     state│
+                                           ▼
+                             ┌──────────────────────┐
+                             │      selector        │
+                             │   reads state.x.y    │
+                             └──────────────────────┘
+
+
+              ┌─────────────────┐                    ┌─────────────────┐
+              │ action creator  │                    │   rtk query     │
+              │  (from slice)   │                    │   (apislice)    │
+              │                 │                    │                 │
+              │  login()        │                    │  usegetxquery() │
+              │  logout()       │                    │                 │
+              └────────┬────────┘                    └────────┬────────┘
+                       │                                      │
+                    action                                    │ http
+                       │                                      │
+                       ▼                                      ▼
+            ┌─────────────────────────┐              ┌─────────────────┐
+            │         store           │              │     server      │
+            │   configurestore()      │              │      (api)      │
+            │                         │              └────────┬────────┘
+            │   {                     │                       │
+            │     api: ◄──────────────┼───────────────────────┘
+            │       (cache here)      │                  response
+            │                         │
+            │     auth:  ◄────────────┼──┐
+            │     messages: ◄─────────┼──┤ slices
+            │     users: ◄────────────┼──┘
+            │   }                     │
+            └───────────┬─────────────┘
+                        │
+                     action
+                        │
+                        ▼
+            ┌─────────────────────────┐
+            │    slice reducers       │
+            │     (createslice)       │
+            │                         │
+            │   update state          │
+            │   via immer             │
+            │                         │
+            │   state.auth.user = ... │
+            │   (looks mutable,       │
+            │    is immutable)        │
+            └───────────┬─────────────┘
+                        │
+                   new state
+                        │
+                        ▼
+            ┌─────────────────────────┐
+            │   useselector(state =>  │
+            │     state.auth.user)    │
+            └───────────┬─────────────┘
+                        │
+                        ▼
+                    ui re-renders
+
+
+================================================================================
+path a — local / ui state (createslice)
+================================================================================
+
+   ui event
+      │
+      ▼
+   dispatch( actioncreator(payload) )
+      │
+      ▼
+   store sends action → slice reducer
+      │
+      ▼
+   reducer updates state
+      │
+      ▼
+   store saves under slice name
+      │
+      ▼
+   useselector(state => state.auth.user)
+      │
+      ▼
+   ui re-renders
+
+
+================================================================================
+path b — server state (rtk query)
+================================================================================
+
+   component calls usegetusersquery()
+      │
+      ▼
+   rtk query sends http request ────────────► server
+      │                                        │
+      │   (same args? → cache hit,             │
+      │    no http)                            │
+      ▼                                        ▼
+   response comes back ◄───────────────────────┘
+      │
+      ▼
+   rtk query auto-saves into state.api        ← cache lives here
+      │
+      ▼
+   component gets { data, isloading, iserror }
+      │
+      ▼
+   ui re-renders
+
+
+================================================================================
+path b (cont.) — mutation + invalidation loop
+================================================================================
+
+   useaddusermutation()
+      │
+      ▼
+   post /users ─────────────────────────────► server
+      │                                        │
+      ◄────────────────────────────────────────┘
+   on success:
+      │
+      ▼
+   invalidatestags: ['user']
+      │
+      ▼
+   clears cache tagged 'user'
+      │
+      ▼
+   triggers automatic refetch
+      │
+      ▼
+   ui re-renders with fresh data
+
+
+================================================================================
+inside the store — the boxes
+================================================================================
+
+   store = {
+     ┌───────────────────────────────────┐
+     │ api:   { user, message, auth }    │ ← rtk query cache
+     │         tags label cached data    │
+     ├───────────────────────────────────┤
+     │ auth:      { user, token }        │ ← authslice
+     │ messages:  { list: [...] }        │ ← messageslice
+     │ users:     { list: [...] }        │ ← userslice
+     └───────────────────────────────────┘
+   }
+
+   access:
+
+     state.api            // rtk query cache
+     state.auth.user      // local slice
+     state.messages.list
+
+
+================================================================================
+the full loop (one sentence)
+================================================================================
+
+   user input
+     → query/mutation (http)  or  dispatch(action)
+     → response / payload
+     → slice reducer updates
+     → store saves under reducer name
+     → selector reads it
+     → ui re-renders
+
+
+================================================================================
+quick reference table
+================================================================================
+
+   ┌────────────┬───────────────────────┬────────────────────────┐
+   │   step     │   local state  (a)    │   server state   (b)   │
+   ├────────────┼───────────────────────┼────────────────────────┤
+   │ trigger    │ dispatch(action)      │ usegetxquery()         │
+   │ carries    │ payload               │ params / body          │
+   │ goes to    │ slice reducer         │ api server             │
+   │ saved at   │ state.slicename       │ state.api              │
+   │ update     │ manual reducer        │ auto (rtk query)       │
+   │ refresh    │ manual                │ invalidatestags        │
+   │ read       │ useselector           │ hook return value      │
+   └────────────┴───────────────────────┴────────────────────────┘
+
+
+================================================================================
+golden rule
+================================================================================
+
+   server data (refetchable)? ──► rtk query  (path b)
+   local / ui state only?     ──► createslice (path a)
+
+================================================================================
+
+- second version
+
+================================================================================
+            rtk query — single pipeline, request birth → cache burial
+================================================================================
+
+
+   ┌───────────────────────────────────────────────────────────────────┐
+   │                     the api slice (createapi)                     │
+   │                                                                   │
+   │   reducerpath: 'api'                                              │
+   │   basequery: fetchbasequery({                                     │
+   │     baseurl: '/api',                                              │
+   │     prepareheaders(headers, { getstate }) {                       │
+   │       token = getstate().auth.token          ◄── injected here    │
+   │       headers.set('authorization', bearer token)                  │
+   │     }                                                             │
+   │   })   tagtypes: ['user', 'message']                                   │
+   └───────────────────────────────────────────────────────────────────┘
+
+
+                                   ▼
+
+
+================================================================================
+                    stage 1 — the hook fires (query)
+================================================================================
+
+
+   ┌─────────────────────────┐
+   │  usegetmessagesquery()  │  or usegetusersquery()
+   └───────────┬─────────────┘
+               │
+               │  cache check first!
+               │
+               ├────── cache hit +? ──► return cached data
+               │                              (no http, done)
+               │
+               │  cache miss / stale
+               ▼
+   ┌─────────────────────────┐
+   │  build the request      │
+   │                         │
+   │  url      → /messages   │
+   │  method   → GET         │
+   │  params   → { page }    │
+   │  headers  → prepared    │
+   └───────────┬─────────────┘
+               │
+
+
+================================================================================
+                    stage 2 — middleware intercepts dispatch
+================================================================================
+
+
+   ┌─────────────────────────────────────────────────────────────┐
+   │  store dispatch                                             │
+   │                                                             │
+   │  action: apislice.middleware → starts pending              │
+   │                                                             │
+   │  state.api.queries['getmessages(null)']                     │
+   │      status: 'pending'                                      │
+   │      endpointname: 'getmessages'                            │
+   └────────────────────────────┬────────────────────────────────┘
+                                │
+                                │ fetch()
+                                ▼
+                     ┌────────────────────┐
+                     │      network       │
+                     └─────────┬──────────┘
+                               │
+
+
+================================================================================
+                    stage 3 — response comes back
+================================================================================
+
+
+                               │
+                               ▼
+   ┌──────────────────────────────────────────────────┐
+   │            basequery result                      │
+   │                                                  │
+   │   ┌── success ─────────────────────────────┐     │
+   │   │  { data: response }                    │     │
+   │   └────────────────┬───────────────────────┘     │
+   │                    │                             │
+   │   ┌── error ───────────────────────────────┐     │
+   │   │  { error: { status, data } }           │     │
+   │   │   no retry, no success path            │     │
+   │   └────────────────┬───────────────────────┘     │
+   └────────────────────┼─────────────────────────────┘
+                        │
+                        ▼
+   ┌──────────────────────────────────────────────────┐
+   │   transformresponse(response)  (optional)        │
+   │   shape it before it lands in cache              │
+   └────────────────────┬─────────────────────────────┘
+                        │
+
+
+================================================================================
+                    stage 4 — tag the cache entry
+================================================================================
+
+
+   ┌──────────────────────────────────────────────────┐
+   │  providestags result evaluated:                  │
+   │                                                  │
+   │  query:    providestags: ['message']             │
+   │            → entry tagged {type:'message'}       │
+   │                                                  │
+   │  state.api.queries['getmessages(null)']          │
+   │      status: 'fulfilled'                         │
+   │      data: <transformed response>                │
+   │      requestid: <id>                             │
+   │                                                  │
+   │  subscription: component is 'listening' to it    │
+   └────────────────────┬─────────────────────────────┘
+                        │
+                        ▼
+   ┌──────────────────────────────────────────────────┐
+   │  selectfromresult recomputes                     │
+   │                                                  │
+   │  hook returns:                                   │
+   │    { data, isloading: false,                     │
+   │      iserror: false, issuccess: true }           │
+   │                                                  │
+   │  referentially stable — re-render only if        │
+   │  data actually changed                           │
+   └──────────────────────────────────────────────────┘
+
+
+================================================================================
+                    stage 5 — mutation invalidates (bed of the query)
+================================================================================
+
+
+   ┌───────────────────────────────┐
+   │  usesendmsgmutation()         │
+   │  onquerystarted:              │
+   │    dispatch api.util.updatequerydata  ← optimistic update
+   │    or just wait for response          ← pessimistic
+   └───────────┬───────────────────┘
+               │ http
+               ▼
+   ┌───────────────────────────────┐
+   │  response ok                  │
+   └───────────┬───────────────────┘
+               │ invalidatestags: ['message']
+               ▼
+   ┌───────────────────────────────────────────────┐
+   │  cache lookup:                                │
+   │  "which entries have tag {type:'message'}?"   │
+   │                                               │
+   │  → getmessages(null)  ← tagged, marked stale  │
+   │                                               │
+   │  ⚠ only entries tagged via providestags die   │
+   │  ⚠ untagged queries never refetch             │
+   └───────────┬───────────────────────────────────┘
+               │
+               ▼
+   ┌───────────────────────────────────────────────┐
+   │  active subscription exists?                  │
+   │                                               │
+   │  yes → auto refetch → back to stage 1         │
+   │  no  → entry marked stale, refetched on       │
+   │         next hook mount (keepunuseddatafor:   │
+   │         60s grace period before garbage       │
+   │         collection)                           │
+   └───────────────────────────────────────────────┘
+
+
+================================================================================
+                    full loop, one glance
+================================================================================
+
+
+   ┌────────────┐  hook    ┌──────────┐  check   ┌──────────────┐
+   │  endpoint  │─────────►│  cache   │─────────►│ fresh? done  │
+   │  definition│          │  lookup  │          └──────┬───────┘
+   └────┬───────┘          └────┬─────┘   stale/miss    │
+        │                       │                       │
+        │ build request         │ hit                   ▼
+        │ (url/method/          │              ┌──────────────────┐
+        │  headers+token)       │              │    http fetch    │
+        ▼                       │              └───────┬──────────┘
+   ┌────────────┐                │                      │
+   │ middleware │◄───────────────┼──────────────────────┘
+   │ tracks it  │    dispatch    │        response
+   └────┬───────┘                │
+        │ pending → fulfilled    │
+        ▼                        │
+   ┌────────────┐                │
+   │  tag the   │                │
+   │  entry     │                │
+   └────┬───────┘                │
+        │                        │
+        ▼                        │
+   ┌────────────┐   mutation     │
+   │  cached    │  invalidates   │
+   │  data      │───────────────►│  ◄── cycle repeats
+   └────────────┘  tags purge    │
+
+
+   ⚠ no middleware in store       → stage 2 never runs, queries dead
+   ⚠ no reducerpath in store      → state.api missing, hooks crash
+   ⚠ no prepareheaders            → every request 401s (except login)
+   ⚠ invalidatestags w/o providestags → nothing ever refetches
+   ⚠ hook un subscription dropped → cache after 60s

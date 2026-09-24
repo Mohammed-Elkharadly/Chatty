@@ -1,11 +1,11 @@
-import { apiSlice } from '../../../shared/api/apiSlice';
+import { apiSlice } from '../../shared/mainApiSlice';
 import {
   setMessages,
   addMessage,
   removeMessage,
   editMessage,
-} from '../slices/messageSlice';
-import type { Message } from '../types/message.types';
+} from './messageSlice';
+import type { Message } from './message.types';
 
 export interface RawMessage extends Omit<Message, 'senderId' | 'receiverId'> {
   senderId:
@@ -43,7 +43,7 @@ export const messageApi = apiSlice.injectEndpoints({
         timestamp?: number;
       }
     >({
-      query: ({ receiverId, timestamp, ...body }) => ({
+      query: ({ receiverId, ...body }) => ({
         url: `/messages/send/${receiverId}`,
         method: 'POST',
         body,

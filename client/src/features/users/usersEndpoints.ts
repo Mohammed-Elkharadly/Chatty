@@ -1,5 +1,5 @@
-import { apiSlice } from '../../../shared/api/apiSlice';
-import type { Contact } from '../types/users.types';
+import { apiSlice } from '../../shared/mainApiSlice';
+import type { Contact } from './users.types';
 
 export const usersApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({

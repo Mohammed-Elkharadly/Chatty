@@ -1,6 +1,6 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import { useAppSelector } from '../../app/hooks';
-import { useUpdateProfileMutation } from '../../features/auth/api/authApi';
+import { useUpdateProfileMutation } from '../../features/auth/authEndpoints';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faXmarkCircle,

@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
+// createApi: Creates a service to use in your application. Contains only the basic redux logic (the core module).
 export const apiSlice = createApi({
   // reducerPath: The unique name for where this API's data lives in the Redux store.
   reducerPath: 'api',

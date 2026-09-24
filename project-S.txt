@@ -1,0 +1,126 @@
+Directory structure:
+└── mohammed-elkharadly-chatty/
+    ├── client/
+    │   ├── README.md
+    │   ├── eslint.config.js
+    │   ├── index.html
+    │   ├── tsconfig.app.json
+    │   ├── tsconfig.json
+    │   ├── tsconfig.node.json
+    │   ├── vite.config.ts
+    │   └── src/
+    │       ├── App.tsx
+    │       ├── index.css
+    │       ├── main.tsx
+    │       ├── app/
+    │       │   ├── hooks.ts
+    │       │   ├── store.ts
+    │       │   └── middleware/
+    │       │       └── rtkQueryErrorMiddlewarw.ts
+    │       ├── components/
+    │       │   ├── ChatLayout.tsx
+    │       │   ├── GuestRoute.tsx
+    │       │   ├── Layout.tsx
+    │       │   ├── ProtectedRoute.tsx
+    │       │   ├── Sidebar.tsx
+    │       │   └── sidebar utilities/
+    │       │       ├── SettingsModal.tsx
+    │       │       ├── SidebarContent.tsx
+    │       │       ├── SidebarFooter.tsx
+    │       │       └── SidebarHeader.tsx
+    │       ├── features/
+    │       │   ├── auth/
+    │       │   │   ├── api/
+    │       │   │   │   └── authApi.ts
+    │       │   │   ├── slices/
+    │       │   │   │   └── authSlice.ts
+    │       │   │   └── types/
+    │       │   │       └── auth.types.ts
+    │       │   ├── messages/
+    │       │   │   ├── api/
+    │       │   │   │   └── messageApi.ts
+    │       │   │   ├── slices/
+    │       │   │   │   └── messageSlice.ts
+    │       │   │   └── types/
+    │       │   │       └── message.types.ts
+    │       │   └── users/
+    │       │       ├── api/
+    │       │       │   └── usersApi.ts
+    │       │       ├── slices/
+    │       │       │   └── usersSlice.ts
+    │       │       └── types/
+    │       │           └── users.types.ts
+    │       ├── pages/
+    │       │   ├── ChatPage.tsx
+    │       │   ├── LoginPage.tsx
+    │       │   ├── SignupPage.tsx
+    │       │   └── chat/
+    │       │       ├── ChatHeader.tsx
+    │       │       ├── ChatInput.tsx
+    │       │       ├── ChatMessages.tsx
+    │       │       └── utility/
+    │       │           ├── DeleteMessage.tsx
+    │       │           └── EditMessage.tsx
+    │       └── shared/
+    │           ├── socket.ts
+    │           ├── api/
+    │           │   └── apiSlice.ts
+    │           └── hooks/
+    │               └── useSocket.ts
+    ├── server/
+    │   ├── Dockerfile
+    │   ├── tsconfig.json
+    │   ├── .dockerignore
+    │   └── src/
+    │       ├── server.ts
+    │       ├── @types/
+    │       │   └── express.d.ts
+    │       ├── config/
+    │       │   ├── cloudinary.ts
+    │       │   ├── db.ts
+    │       │   ├── env.ts
+    │       │   ├── firebase.ts
+    │       │   ├── redis.ts
+    │       │   ├── resend.ts
+    │       │   └── socket.ts
+    │       ├── controllers/
+    │       │   ├── authController.ts
+    │       │   ├── blockController.ts
+    │       │   ├── groupController.ts
+    │       │   ├── groupJoinController.ts
+    │       │   ├── groupMessageController.ts
+    │       │   ├── messageController.ts
+    │       │   └── userController.ts
+    │       ├── email/
+    │       │   ├── emailHandler.ts
+    │       │   ├── forgotPassTemplate.ts
+    │       │   ├── otpTemplate.ts
+    │       │   ├── verificationTemplate.ts
+    │       │   └── welcomeTemplate.ts
+    │       ├── middleware/
+    │       │   ├── errorHandler.ts
+    │       │   ├── limiters.ts
+    │       │   ├── upload.ts
+    │       │   └── verifyJwt.ts
+    │       ├── models/
+    │       │   ├── Block.ts
+    │       │   ├── Group.ts
+    │       │   ├── GroupJoinRequest.ts
+    │       │   ├── GroupMember.ts
+    │       │   ├── GroupMessage.ts
+    │       │   ├── Message.ts
+    │       │   └── User.ts
+    │       ├── routes/
+    │       │   ├── auth.route.ts
+    │       │   ├── group.route.ts
+    │       │   ├── message.route.ts
+    │       │   └── user.route.ts
+    │       └── utils/
+    │           ├── cloudinaryUpload.ts
+    │           ├── customError.ts
+    │           ├── tokenHandler.ts
+    │           ├── validator.ts
+    │           └── verifyWithProvider.ts
+    └── .github/
+        └── workflows/
+            └── ci.yml.disabled

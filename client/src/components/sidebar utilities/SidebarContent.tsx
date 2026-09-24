@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useLazySearchUsersQuery } from '../../features/users/api/usersApi';
-import { setSelectedContact } from '../../features/users/slices/usersSlice';
-import type { Contact } from '../../features/users/types/users.types';
+import { setSelectedContact } from '../../features/users/usersSlice';
+import type { Contact } from '../../features/users/users.types';
 
 interface SidebarContentProps {
   isOpen: boolean;

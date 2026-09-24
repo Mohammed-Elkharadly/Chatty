@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { setContacts } from '../features/users/slices/usersSlice';
+import { setContacts } from '../features/users/usersSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { useGetChatHistoryQuery } from '../features/users/api/usersApi';
-import { useLogoutUserMutation } from '../features/auth/api/authApi';
+import { useLogoutUserMutation } from '../features/auth/authEndpoints';
 import SidebarHeader from './sidebar utilities/SidebarHeader';
 import SidebarContent from './sidebar utilities/SidebarContent';
 import SidebarFooter from './sidebar utilities/SidebarFooter';

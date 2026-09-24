@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Message } from '../types/message.types';
+import type { Message } from './message.types';
 
 interface MessageState {
   messages: Message[];

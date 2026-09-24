@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type SubmitEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useSignupUserMutation } from '../features/auth/api/authApi';
+import { useSignupUserMutation } from '../features/auth/authEndpoints';
 
 const SignupPage = () => {
   const nameRef = useRef<HTMLInputElement>(null);
@@ -8,6 +8,7 @@ const SignupPage = () => {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
   const [signupUser, { isLoading, isError, error }] = useSignupUserMutation();
@@ -20,7 +21,7 @@ const SignupPage = () => {
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     try {
-      await signupUser({ name, email, password }).unwrap();
+      await signupUser({ name, email, password, phone }).unwrap();
       navigate('/');
     } catch (error) {
       console.error('Failed to signup', error);
