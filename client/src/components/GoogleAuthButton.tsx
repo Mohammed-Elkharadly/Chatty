@@ -9,7 +9,7 @@ const GoogleAuthButton = () => {
   return (
     <div className='w-full flex justify-center'>
       <GoogleLogin
-        width='100%'
+        width='320'
         size='large'
         text='continue_with'
         shape='pill'

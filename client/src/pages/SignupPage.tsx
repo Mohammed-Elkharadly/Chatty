@@ -99,7 +99,7 @@ const SignupPage = () => {
                 <input
                   type='email'
                   placeholder='example@gmail.com'
-                  className={`input input-borderd ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered ${isError ? "input-error" : ""}`}
                   id='email'
                   name='email'
                   onChange={handleChange}
@@ -115,7 +115,7 @@ const SignupPage = () => {
                 <input
                   type='password'
                   placeholder='************'
-                  className={`input input-borderd ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered ${isError ? "input-error" : ""}`}
                   id='password'
                   name='password'
                   onChange={handleChange}
@@ -131,7 +131,7 @@ const SignupPage = () => {
                 <input
                   type='tel'
                   placeholder='+23 4576987352'
-                  className={`input input-borderd ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered ${isError ? "input-error" : ""}`}
                   id='phone'
                   name='phone'
                   onChange={handleChange}
