@@ -1,13 +1,21 @@
-import { useState, useEffect, useRef, type SubmitEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useLoginUserMutation } from '../features/auth/authEndpoints';
-import toast from 'react-hot-toast';
+import { useState, useEffect, useRef } from "react";
+import type { SubmitEvent, ChangeEvent } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useLoginUserMutation } from "../features/auth/authEndpoints";
+import toast from "react-hot-toast";
+import type { LoginCredentials } from "../features/auth/auth.types";
+import type { ApiError } from "./SignupPage";
+import GoogleAuthButton from "../components/GoogleAuthButton";
+
+const initialLoginForm: LoginCredentials = {
+  email: "",
+  password: "",
+};
 
 const LoginPage = () => {
   const emailRef = useRef<HTMLInputElement>(null);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState<LoginCredentials>(initialLoginForm);
 
   const navigate = useNavigate();
 
@@ -19,89 +27,96 @@ const LoginPage = () => {
   }, []);
 
   useEffect(() => {
-    if (isSuccess) {
-      navigate('/');
-    }
+    if (isSuccess) navigate("/");
   }, [isSuccess, navigate]);
 
-  const handleSubmit = async (e: SubmitEvent) => {
+  const handleCange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const data = await loginUser({ email, password }).unwrap();
+      const data = await loginUser(formData).unwrap();
       toast.success(data.message);
     } catch (error) {
-      console.error('Failed to login', error);
+      console.error("Failed to login", error);
     }
   };
 
   // extract error message from RTK query error
   const errorMessage =
-    (error as any)?.data?.message || 'something went wrong. try again.';
+    (error as ApiError | undefined)?.data?.message ||
+    "something went wrong. try again.";
+
+  const isFormIncomplete = !formData.email || !formData.password;
 
   return (
     <>
       <main
-        className="flex min-h-screen items-center justify-center
-            bg-[linear-gradient(68deg,#ff0081,black)]"
+        className='flex min-h-screen items-center justify-center
+            bg-[linear-gradient(68deg,#ff0081,black)]'
       >
-        <div className="card w-96 bg-fuchsia-900 shadow-xl">
-          <div className="card-body">
-            <h2 className="mb-4 card-title text-2xl font-bold">Login</h2>
+        <div className='card w-96 bg-fuchsia-900 shadow-xl'>
+          <div className='card-body'>
+            <h2 className='mb-4 card-title text-2xl font-bold'>Login</h2>
             {/** error alert */}
             {isError && (
-              <div className="alert alert-error">
+              <div className='alert alert-error'>
                 <span>{errorMessage}</span>
               </div>
             )}
-            <form id="submit-form" onSubmit={handleSubmit}>
-              <div className="form-control mb-3">
-                <label htmlFor="email" className="label-text">
+            <form id='submit-form' onSubmit={handleSubmit}>
+              <div className='form-control mb-3'>
+                <label htmlFor='email' className='label-text'>
                   Email
                 </label>
                 <input
                   ref={emailRef}
-                  type="email"
-                  placeholder="example@gmail.com"
-                  className={`input input-bordered ${isError ? 'input-error' : ''}`}
-                  id="email"
-                  name="email"
-                  onChange={(e) => setEmail(e.target.value)}
-                  value={email}
+                  type='email'
+                  placeholder='example@gmail.com'
+                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  id='email'
+                  name='email'
+                  onChange={handleCange}
+                  value={formData.email}
                   required
-                  autoComplete="on"
+                  autoComplete='on'
                 />
               </div>
-              <div className="form-control mb-6">
-                <label htmlFor="password" className="label-text">
+              <div className='form-control mb-6'>
+                <label htmlFor='password' className='label-text'>
                   Password
                 </label>
                 <input
-                  type="password"
-                  placeholder="************"
-                  className={`input input-bordered ${isError ? 'input-error' : ''}`}
-                  id="password"
-                  name="password"
-                  onChange={(e) => setPassword(e.target.value)}
-                  value={password}
+                  type='password'
+                  placeholder='************'
+                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  id='password'
+                  name='password'
+                  onChange={handleCange}
+                  value={formData.password}
                   required
-                  autoComplete="off"
+                  autoComplete='off'
                 />
               </div>
               <button
-                type="submit"
-                className="btn w-full btn-primary"
-                disabled={isLoading || !email || !password}
+                type='submit'
+                className='btn w-full btn-primary'
+                disabled={isLoading || isFormIncomplete}
               >
                 {isLoading ? (
-                  <span className="loading loading-sm loading-spinner"></span>
+                  <span className='loading loading-sm loading-spinner'></span>
                 ) : (
-                  'Login'
+                  "Login"
                 )}
               </button>
             </form>
-            <p className="mt-4 text-center text-sm">
-              Don't have an account?{' '}
-              <Link to="/signup" className="link link-primary">
+            <GoogleAuthButton />
+            <p className='mt-4 text-center text-sm'>
+              Don't have an account?{" "}
+              <Link to='/signup' className='link link-primary'>
                 Signup
               </Link>
             </p>

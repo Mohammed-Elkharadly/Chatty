@@ -1,15 +1,26 @@
-import { useState, useEffect, useRef, type SubmitEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useSignupUserMutation } from '../features/auth/authEndpoints';
+import { useState, useEffect, useRef } from "react";
+import type { SubmitEvent, ChangeEvent } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import type { SignupData } from "../features/auth/auth.types";
+import { useSignupUserMutation } from "../features/auth/authEndpoints";
+import GoogleAuthButton from "../components/GoogleAuthButton";
+
+const initialSignupForm: SignupData = {
+  name: "",
+  email: "",
+  password: "",
+  phone: "",
+};
+
+export interface ApiError {
+  data?: { message?: string };
+}
 
 const SignupPage = () => {
   const nameRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState<SignupData>(initialSignupForm);
 
   const [signupUser, { isLoading, isError, error }] = useSignupUserMutation();
 
@@ -18,107 +29,132 @@ const SignupPage = () => {
     nameRef.current?.focus();
   }, []);
 
-  const handleSubmit = async (e: SubmitEvent) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      await signupUser({ name, email, password, phone }).unwrap();
-      navigate('/');
+      await signupUser(formData).unwrap();
+      navigate("/");
     } catch (error) {
-      console.error('Failed to signup', error);
+      console.error("Failed to signup", error);
     }
   };
 
   const errorMessage =
-    (error as any)?.data?.message || 'something went wrong. try again.';
+    (error as ApiError | undefined)?.data?.message ??
+    "Something went wrong. Try again.";
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <span className="loading m-auto loading-xl loading-spinner text-center"></span>
+      <div className='flex min-h-screen items-center justify-center'>
+        <span className='loading m-auto loading-xl loading-spinner text-center'></span>
       </div>
     );
   }
 
+  const isFormIncomplete =
+    !formData.name || !formData.email || !formData.password;
+
   return (
     <>
       <main
-        className="flex min-h-screen items-center justify-center
-            bg-[linear-gradient(68deg,black,#ff0081)]"
+        className='flex min-h-screen items-center justify-center
+            bg-[linear-gradient(68deg,black,#ff0081)]'
       >
-        <div className="card w-96 bg-fuchsia-900 shadow-xl">
-          <div className="card-body">
-            <h2 className="mb-4 card-title text-2xl font-bold">Signup</h2>
+        <div className='card w-96 bg-fuchsia-900 shadow-xl'>
+          <div className='card-body'>
+            <h2 className='mb-4 card-title text-2xl font-bold'>Signup</h2>
             {/** error alert */}
             {isError && (
-              <div className="alert alert-error">
+              <div className='alert alert-error'>
                 <span>{errorMessage}</span>
               </div>
             )}
-            <form id="submit-form" onSubmit={handleSubmit}>
-              <div className="form-control mb-3">
-                <label htmlFor="name" className="label-text">
+            <form id='submit-form' onSubmit={handleSubmit}>
+              <div className='form-control mb-3'>
+                <label htmlFor='name' className='label-text'>
                   Name
                 </label>
                 <input
                   ref={nameRef}
-                  type="text"
-                  placeholder="John Deo"
-                  className={`input input-bordered ${isError ? 'input-error' : ''}`}
-                  id="name"
-                  name="name"
-                  onChange={(e) => setName(e.target.value)}
-                  value={name}
+                  type='text'
+                  placeholder='John Deo'
+                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  id='name'
+                  name='name'
+                  onChange={handleChange}
+                  value={formData.name}
                   required
-                  autoComplete="on"
+                  autoComplete='on'
                 />
               </div>
-              <div className="form-control mb-3">
-                <label htmlFor="email" className="label-text">
+              <div className='form-control mb-3'>
+                <label htmlFor='email' className='label-text'>
                   Email
                 </label>
                 <input
-                  type="email"
-                  placeholder="example@gmail.com"
-                  className={`input input-borderd ${isError ? 'input-error' : ''}`}
-                  id="email"
-                  name="email"
-                  onChange={(e) => setEmail(e.target.value)}
-                  value={email}
+                  type='email'
+                  placeholder='example@gmail.com'
+                  className={`input input-borderd ${isError ? "input-error" : ""}`}
+                  id='email'
+                  name='email'
+                  onChange={handleChange}
+                  value={formData.email}
                   required
-                  autoComplete="on"
+                  autoComplete='on'
                 />
               </div>
-              <div className="form-control mb-6">
-                <label htmlFor="password" className="label-text">
+              <div className='form-control mb-6'>
+                <label htmlFor='password' className='label-text'>
                   Password
                 </label>
                 <input
-                  type="password"
-                  placeholder="************"
-                  className={`input input-borderd ${isError ? 'input-error' : ''}`}
-                  id="password"
-                  name="password"
-                  onChange={(e) => setPassword(e.target.value)}
-                  value={password}
+                  type='password'
+                  placeholder='************'
+                  className={`input input-borderd ${isError ? "input-error" : ""}`}
+                  id='password'
+                  name='password'
+                  onChange={handleChange}
+                  value={formData.password}
                   required
-                  autoComplete="off"
+                  autoComplete='off'
+                />
+              </div>
+              <div className='form-control mb-6'>
+                <label htmlFor='phone' className='label-text'>
+                  Phone <span className='text-xs opacity-60'>(optional)</span>
+                </label>
+                <input
+                  type='tel'
+                  placeholder='+23 4576987352'
+                  className={`input input-borderd ${isError ? "input-error" : ""}`}
+                  id='phone'
+                  name='phone'
+                  onChange={handleChange}
+                  value={formData.phone}
+                  autoComplete='tel'
                 />
               </div>
               <button
-                type="submit"
-                className="btn w-full btn-primary"
-                disabled={isLoading || !name || !email || !password}
+                type='submit'
+                className='btn w-full btn-primary'
+                disabled={isLoading || isFormIncomplete}
               >
                 {isLoading ? (
-                  <span className="loading loading-sm loading-spinner"></span>
+                  <span className='loading loading-sm loading-spinner'></span>
                 ) : (
-                  'Signup'
+                  "Signup"
                 )}
               </button>
             </form>
-            <p className="mt-4 text-center text-sm">
-              Already have an account?{' '}
-              <Link to="/login" className="link link-primary">
+            <GoogleAuthButton />
+            <p className='mt-4 text-center text-sm'>
+              Already have an account?{" "}
+              <Link to='/login' className='link link-primary'>
                 Login
               </Link>
             </p>
