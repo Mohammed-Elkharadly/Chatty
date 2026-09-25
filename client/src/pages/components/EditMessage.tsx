@@ -1,8 +1,8 @@
 import { useState, useRef, type ChangeEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmarkCircle, faUpload } from "@fortawesome/free-solid-svg-icons";
-import { useUpdateMessageMutation } from "../../../features/messages/messageEndpoints";
-import type { Message } from "../../../features/messages/message.types";
+import { useUpdateMessageMutation } from "../../features/messages/messageEndpoints";
+import type { Message } from "../../features/messages/message.types";
 
 interface UpdateMessageProps {
   message: Message;

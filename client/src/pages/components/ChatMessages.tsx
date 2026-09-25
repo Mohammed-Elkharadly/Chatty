@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useAppSelector } from '../../app/hooks';
-import DeleteMessage from './utility/DeleteMessage';
+import DeleteMessage from './DeleteMessage';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCheck,
@@ -9,7 +9,7 @@ import {
   faArrowDown,
   faPenToSquare,
 } from '@fortawesome/free-solid-svg-icons';
-import EditMessage from '../chat/utility/EditMessage';
+import EditMessage from './EditMessage';
 
 const formatTime = new Intl.DateTimeFormat('en-US', {
   hour: '2-digit',
@@ -42,7 +42,7 @@ const ChatMessages = () => {
           </p>
         ) : (
           messages.map((msg) => {
-            const isMe = msg.senderId === user?._id;
+            const isMe = msg.senderId === user?.id;
             const isMenuOpen = openMenuId === msg._id;
             const isEditing = editingId === msg._id;
             return (

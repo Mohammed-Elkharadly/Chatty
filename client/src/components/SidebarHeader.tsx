@@ -4,9 +4,9 @@ import {
   faBell,
   faBellSlash,
 } from '@fortawesome/free-solid-svg-icons';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { setIsMuted } from '../../features/users/usersSlice';
-import type { User } from '../../features/auth/auth.types';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { setIsMuted } from '../features/users/usersSlice';
+import type { User } from '../features/auth/auth.types';
 
 interface SidebarHeaderProps {
   isOpen: boolean;

@@ -8,9 +8,9 @@ import {
 } from '../features/messages/messageEndpoints';
 import { clearUnRead } from '../features/users/usersSlice';
 import { setMessages } from '../features/messages/messageSlice';
-import ChatHeader from './chat/ChatHeader';
-import ChatMessages from './chat/ChatMessages';
-import ChatInput from './chat/ChatInput';
+import ChatHeader from './components/ChatHeader';
+import ChatMessages from './components/ChatMessages';
+import ChatInput from './components/ChatInput';
 
 const ChatPage = () => {
   const [content, setContent] = useState('');

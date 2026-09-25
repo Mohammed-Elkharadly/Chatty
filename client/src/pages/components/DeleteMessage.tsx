@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useDeleteMessageMutation } from '../../../features/messages/messageEndpoints';
-import type { Message } from '../../../features/messages/message.types';
+import { useDeleteMessageMutation } from '../../features/messages/messageEndpoints';
+import type { Message } from '../../features/messages/message.types';
 
 interface DeleteMessageProps {
   message: Message;

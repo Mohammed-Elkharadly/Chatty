@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useLoginUserMutation } from "../features/auth/authEndpoints";
 import toast from "react-hot-toast";
 import type { LoginCredentials } from "../features/auth/auth.types";
-import type { ApiError } from "./SignupPage";
+import type { ApiError } from '../middleware/rtkQueryErrorMiddlewarw';
 import GoogleAuthButton from "../components/GoogleAuthButton";
 
 const initialLoginForm: LoginCredentials = {

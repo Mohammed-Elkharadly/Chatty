@@ -2,7 +2,7 @@ import { isRejectedWithValue, type Middleware } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 
 // Shape of the payload when the server sends back an error message.
-type ApiError = { data?: { message?: string } };
+export type ApiError = { data?: { message?: string } };
 
 // rtkQueryErrorMiddleware: Watches every action passing through the store.
 export const rtkQueryErrorMiddleware: Middleware =

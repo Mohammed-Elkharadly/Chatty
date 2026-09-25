@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import type { SignupData } from "../features/auth/auth.types";
 import { useSignupUserMutation } from "../features/auth/authEndpoints";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import type { ApiError } from '../middleware/rtkQueryErrorMiddlewarw';
 
 const initialSignupForm: SignupData = {
   name: "",
@@ -11,10 +12,6 @@ const initialSignupForm: SignupData = {
   password: "",
   phone: "",
 };
-
-export interface ApiError {
-  data?: { message?: string };
-}
 
 const SignupPage = () => {
   const nameRef = useRef<HTMLInputElement>(null);

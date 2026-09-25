@@ -1,4 +1,4 @@
-import { apiSlice } from "../../shared/mainApiSlice";
+import { apiSlice } from "../../lib/mainApiSlice";
 import { login, logout } from "./authSlice";
 import type {
   User,
