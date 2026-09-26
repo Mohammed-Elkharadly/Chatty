@@ -51,8 +51,8 @@ const removePresence = async (userId: string, socketId: string) => {
   return { wentOffline: false, onlineUserIds: null };
 };
 
-export let io: Server | null = null;
-export let subClient: Redis | null = null;
+export let io!: Server;
+export let subClient!: Redis;
 
 export const initSocketServer = (
   httpServer: HttpServer,

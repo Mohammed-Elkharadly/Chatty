@@ -5,12 +5,12 @@ import type { UserDocument } from '../models/User.js';
 export class Validator {
   private static readonly emailRegEx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
   private static readonly passRegEx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/; 
-  private static readonly phoneRegEx = /^\+?[1-9]\d{7,14}$/
+  private static readonly phoneRegEx = /^\+?[0-9]\d{7,14}$/
   // signup check
   static validateSignup(name: string, email: string, password: string, phone: string) {
     // check if all credentials is provided
-    if (!name || !email || !password || !phone) {
-      throw new CustomError('All fields are required', StatusCodes.BAD_REQUEST);
+    if (!name || !email || !password) {
+      throw new CustomError('first 3 fields are required', StatusCodes.BAD_REQUEST);
     }
 
     // check if the email is valid

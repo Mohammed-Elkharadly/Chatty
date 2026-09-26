@@ -46,7 +46,8 @@ export const searchUsers = async (req: Request, res: Response) => {
     ],
   })
     .select("-password")
-    .limit(10);
+    .limit(10)
+    .lean();
 
   // no matches → return empty array early
   if (filteredUsers?.length === 0) {

@@ -589,7 +589,6 @@ userSchema.set("toJSON", {
       lockUntil, // lock timestamp
       providerId, // OAuth provider's internal ID
       avatarPublicId, // Cloudinary internal ID
-      _id, // MongoDB internal ID (use `id` virtual instead)
       __v, // MongoDB version key (meaningless to the client)
       ...rest // everything else (name, email, avatar, isVerified, etc.)
     } = ret;

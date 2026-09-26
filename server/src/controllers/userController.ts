@@ -22,7 +22,7 @@ export const logout = async (req: Request, res: Response) => {
   TokenHandler.clearCookie(res);
 
   // respond with 200
-  res.status(StatusCodes.OK).json({ message: "user logged out successfully" });
+  res.status(StatusCodes.OK).json({ message: "logged out successfully" });
 };
 
 // handles: GET /api/auth/check — confirms the current user is logged in and returns their profile
