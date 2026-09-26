@@ -1,27 +1,27 @@
 import { useEffect, useRef } from 'react';
-import { usersApi } from '../../features/users/api/usersApi';
+import { usersApi } from '../features/users/usersEndpoints';
 import {
   normalizeMessage,
   type RawMessage,
-} from '../../features/messages/api/messageApi';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
+} from '../features/messages/messageEndpoints';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
 import {
   setOnlineUsers,
   unReadMessage,
-} from '../../features/users/usersSlice';
+} from '../features/users/usersSlice';
 import {
   addMessage,
   markMessagesAsRead,
   removeMessage,
   editMessage,
-} from '../../features/messages/messageSlice';
-import socket from '../socket';
-import type { Message } from '../../features/messages/message.types';
+} from '../features/messages/messageSlice';
+import socket from '../lib/socket';
+import type { Message } from '../features/messages/message.types';
 
 const useSocket = () => {
   const dispatch = useAppDispatch();
   const isMuted = useAppSelector((state) => state.users.isMuted);
-  const userId = useAppSelector((state) => state.auth.user?._id);
+  const userId = useAppSelector((state) => state.auth.user?.id);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 

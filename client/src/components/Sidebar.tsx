@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { useAppSelector, useAppDispatch } from "../app/hooks";
 import { useGetChatHistoryQuery } from "../features/users/usersEndpoints";
-import { useLogoutUserMutation } from "../features/auth/authEndpoints";
+import { useLogoutUserMutation } from "../features/users/usersEndpoints";
 import SidebarHeader from "./SidebarHeader";
 import SidebarContent from "./SidebarContent";
 import SidebarFooter from "./SidebarFooter";
@@ -41,9 +41,9 @@ const Sidebar = () => {
 
   return (
     <nav
-      className={`flex flex-col h-screen bg-base-200
+      className={`flex flex-col min-h-dvh bg-base-200
         transition-all duration-300 bg-[linear-gradient(68deg,#ff0081,black)]
-      ${isOpen ? "w-64 absolute z-40 md:relative md:z-auto" : "w-16"}`}
+      ${isOpen ? "w-60 absolute z-40 md:relative md:z-auto" : "w-16"}`}
     >
       {/* Toggle */}
       <div className='p-3'>

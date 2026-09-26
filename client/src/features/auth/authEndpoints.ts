@@ -1,10 +1,8 @@
 import { apiSlice } from "../../lib/mainApiSlice";
-import { login, logout } from "./authSlice";
+import { login } from "./authSlice";
 import type {
-  User,
-  LoginCredentials,
   SignupData,
-  ChangePasswordData,
+  LoginCredentials,
   ForgotPasswordData,
   ResetPasswordData,
   ResendVerificationData,
@@ -12,18 +10,35 @@ import type {
   SendOtpData,
   VerifyOtpData,
   OAuthLoginData,
+  AuthResponse,
 } from "./auth.types";
 
 // injectEndpoints: Adds auth endpoints onto the base apiSlice created earlier.
 export const authApi = apiSlice.injectEndpoints({
   // builder: The helper RTK Query gives us to describe each request.
   endpoints: (builder) => ({
+    // signupUser: Registers a new account. No side effects needed here.
+    signupUser: builder.mutation<AuthResponse, SignupData>({
+      query: (userData) => ({
+        url: "/auth/signup",
+        method: "POST",
+        body: userData,
+      }),
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          // queryFulfilled: A promise that resolves once the server replies.
+          const { data } = await queryFulfilled;
+          // Save the user into our auth slice so the app knows who is logged in.
+          dispatch(login({ user: data.data.user }));
+        } catch (error) {
+          console.error(error);
+        }
+      },
+    }),
+
     // loginUser: Sends credentials and returns the logged-in user.
     // <response type, request body type>
-    loginUser: builder.mutation<
-      { user: User; message: string },
-      LoginCredentials
-    >({
+    loginUser: builder.mutation<AuthResponse, LoginCredentials>({
       // query: Describes the HTTP call — where, how, and what we send.
       query: (credentials) => ({
         url: "/auth/login",
@@ -36,26 +51,14 @@ export const authApi = apiSlice.injectEndpoints({
           // queryFulfilled: A promise that resolves once the server replies.
           const { data } = await queryFulfilled;
           // Save the user into our auth slice so the app knows who is logged in.
-          dispatch(login({ user: data.user }));
+          dispatch(login({ user: data.data.user }));
         } catch (error) {
           console.error(error);
         }
       },
     }),
 
-    // signupUser: Registers a new account. No side effects needed here.
-    signupUser: builder.mutation<{ user: User; message: string }, SignupData>({
-      query: (userData) => ({
-        url: "/auth/signup",
-        method: "POST",
-        body: userData,
-      }),
-    }),
-
-    oAuthLogin: builder.mutation<
-      { user: User; message: string },
-      OAuthLoginData
-    >({
+    oAuthLogin: builder.mutation<AuthResponse, OAuthLoginData>({
       query: (body) => ({
         url: "/auth/oauth/login",
         method: "POST",
@@ -64,85 +67,12 @@ export const authApi = apiSlice.injectEndpoints({
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(login({ user: data.user }));
+          dispatch(login({ user: data.data.user }));
         } catch (error) {
           console.error("oAuth login failed", error);
         }
       },
-    }),
-
-    // logoutUser: Ends the session on the server and clears everything locally.
-    logoutUser: builder.mutation<{ message: string }, void>({
-      query: () => ({
-        url: "/auth/logout",
-        method: "POST",
-      }),
-      // onQueryStarted: runs immediately when logout triggered
-      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled; // wait for the server to confirm logout
-          dispatch(logout()); // wipe local auth state
-          dispatch(apiSlice.util.resetApiState()); // clear all cached messages/data
-        } catch (error) {
-          console.error("logout failed", error);
-        }
-      },
-    }),
-
-    // updateProfile: Sends only the fields that changed (name or avatar).
-    updateProfile: builder.mutation<
-      { success: boolean; user: User },
-      { avatar?: string; name?: string }
-    >({
-      query: (data) => ({
-        url: "/auth/update-profile",
-        method: "PATCH",
-        body: data,
-      }),
-      // When the profile is updated, we update the local auth state with the new data.
-      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          // Reuse login() because it already knows how to store a user object.
-          dispatch(login({ user: data.user }));
-        } catch (error) {
-          console.error("Profile update failed:", error);
-        }
-      },
-    }),
-
-    changePassword: builder.mutation<{ message: string }, ChangePasswordData>({
-      query: (body) => ({
-        url: "/users/change-password",
-        method: "POST",
-        body,
-      }),
-      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          dispatch(logout()); // force re-login client-side too
-        } catch (error) {
-          console.error("Failed to change the password", error);
-        }
-      },
-    }),
-
-    deleteAccount: builder.mutation<{ message: string }, { password: string }>({
-      query: (body) => ({
-        url: "users/delete-account",
-        method: "DELETE",
-        body,
-      }),
-      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-        try {
-          await queryFulfilled;
-          dispatch(logout());
-          dispatch(apiSlice.util.resetApiState());
-        } catch (error) {
-          console.error("delete account failed", error);
-        }
-      },
-    }),
+    }),   
 
     forgotPassword: builder.mutation<{ message: string }, ForgotPasswordData>({
       query: (body) => ({
@@ -196,26 +126,7 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // checkAuth: Asks the server "am I still logged in?" on app start / refresh.
-    checkAuth: builder.query<{ user: User }, void>({
-      // A query with just a string URL uses GET automatically.
-      query: () => "/users/check-auth",
-      // providesTags: Marks this result as 'Auth' so invalidating 'Auth' refetches it.
-      providesTags: ["Auth"],
-      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          // Session still valid → restore the user into state.
-          dispatch(login({ user: data.user }));
-        } catch (error) {
-          // Not authenticated anymore → make sure local state matches reality.
-          const err = error as { error?: { status?: number } };
-          if (err.error?.status === 401 || err.error?.status === 403) {
-            dispatch(logout());
-          }
-        }
-      },
-    }),
+    
   }),
 });
 
@@ -226,15 +137,13 @@ export const {
   useLoginUserMutation,
   useSignupUserMutation,
   useOAuthLoginMutation,
-  useLogoutUserMutation,
-  useUpdateProfileMutation,
-  useChangePasswordMutation,
-  useDeleteAccountMutation,
+  
+  
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useResendVerificationMutation,
   useVerifyEmailMutation,
   useSendOtpMutation,
   useVerifyOtpMutation,
-  useCheckAuthQuery,
+  
 } = authApi;

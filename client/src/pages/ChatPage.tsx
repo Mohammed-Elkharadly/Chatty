@@ -85,7 +85,7 @@ const ChatPage = () => {
 
   return (
     <>
-      <div className="flex h-screen flex-1 flex-col">
+      <div className="flex min-h-screen flex-1 flex-col">
         <ChatHeader />
         {/** Message*/}
         <ChatMessages />

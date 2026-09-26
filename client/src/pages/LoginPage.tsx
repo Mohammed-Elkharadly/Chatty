@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useLoginUserMutation } from "../features/auth/authEndpoints";
 import toast from "react-hot-toast";
 import type { LoginCredentials } from "../features/auth/auth.types";
-import type { ApiError } from '../middleware/rtkQueryErrorMiddlewarw';
+import type { ApiError } from "../app/middleware/rtkQueryErrorMiddlewarw";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 
 const initialLoginForm: LoginCredentials = {
@@ -113,8 +113,13 @@ const LoginPage = () => {
                 )}
               </button>
             </form>
+            <div className='mb-2 text-right'>
+              <Link to='/forgot-password' className='link link-hover text-md link-primary'>
+                Forgot password?
+              </Link>
+            </div>
             <GoogleAuthButton />
-            <p className='mt-4 text-center text-sm'>
+            <p className='mt-4 text-center text-md mb-4'>
               Don't have an account?{" "}
               <Link to='/signup' className='link link-primary'>
                 Signup

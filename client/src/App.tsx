@@ -1,9 +1,12 @@
 import { Routes, Route } from "react-router-dom";
-import { useCheckAuthQuery } from "./features/auth/authEndpoints";
+import { useCheckAuthQuery } from "./features/users/usersEndpoints";
 import Layout from "./components/Layout";
 import ChatPage from "./pages/ChatPage";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import ChatLayout from "./components/ChatLayout";
@@ -33,6 +36,9 @@ function App() {
           <Route path='signup' element={<SignupPage />} />
           <Route path='login' element={<LoginPage />} />
         </Route>
+        <Route path='forgot-password' element={<ForgotPasswordPage />} />
+        <Route path='reset-password' element={<ResetPasswordPage />} />
+        <Route path='verify-email/:status' element={<VerifyEmailPage />} />
       </Route>
     </Routes>
   );

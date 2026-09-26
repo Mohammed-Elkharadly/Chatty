@@ -38,7 +38,7 @@ const SidebarContent = ({
 
     const clearSearch = setTimeout(() => {
       setSearch('');
-    }, 10000);
+    }, 20000);
 
     return () => {
       clearTimeout(delayDebounceFn);
@@ -50,7 +50,7 @@ const SidebarContent = ({
     const query = search.trim().toLowerCase();
 
     if (query.length >= 3) {
-      return searchData?.users ?? [];
+      return searchData?.contacts ?? [];
     }
 
     return contacts.filter(

@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import type { SignupData } from "../features/auth/auth.types";
 import { useSignupUserMutation } from "../features/auth/authEndpoints";
 import GoogleAuthButton from "../components/GoogleAuthButton";
-import type { ApiError } from '../middleware/rtkQueryErrorMiddlewarw';
+import type { ApiError } from '../app/middleware/rtkQueryErrorMiddlewarw';
 
 const initialSignupForm: SignupData = {
   name: "",
@@ -71,7 +71,7 @@ const SignupPage = () => {
                 <span>{errorMessage}</span>
               </div>
             )}
-            <form id='submit-form' onSubmit={handleSubmit}>
+            <form id='submit-form' className="mb-4" onSubmit={handleSubmit}>
               <div className='form-control mb-3'>
                 <label htmlFor='name' className='label-text'>
                   Name
@@ -149,7 +149,7 @@ const SignupPage = () => {
               </button>
             </form>
             <GoogleAuthButton />
-            <p className='mt-4 text-center text-sm'>
+            <p className='mt-2 text-center text-md'>
               Already have an account?{" "}
               <Link to='/login' className='link link-primary'>
                 Login

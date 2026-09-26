@@ -1,9 +1,11 @@
+export type AuthProvider = "local" | "google" | "facebook" | "phone";
 export interface User {
   id: string;
   name: string;
   email: string;
   avatar?: string;
   phone?: string;
+  provider: AuthProvider;
 }
 
 export interface AuthState {
@@ -56,5 +58,22 @@ export interface VerifyOtpData {
 
 export interface OAuthLoginData {
   provider: "google";
+  idToken: string;
+}
+
+export interface AuthResponse {
+  message: string;
+  data: { user: User };
+}
+
+// checkAuth has no top-level message on success
+export interface CheckAuthResponse {
+  data: { user: User };
+}
+
+export interface UpdateProfileResponse {
+  success: boolean;
+  data: { user: User };
+  provider: string;
   idToken: string;
 }
