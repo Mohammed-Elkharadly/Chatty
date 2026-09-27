@@ -24,8 +24,8 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-[linear-gradient(68deg,#ff0081,black)]'>
-      <div className='card w-96 bg-fuchsia-900 shadow-xl'>
+    <main className='flex min-h-screen items-center justify-center  bg-slate-900'>
+      <div className='card w-96  bg-blue-900/25 shadow-xl rounded-xl'>
         <div className='card-body'>
           <h2 className='mb-4 card-title text-2xl font-bold'>
             Forgot Password
@@ -46,7 +46,7 @@ const ForgotPasswordPage = () => {
                   type='email'
                   id='email'
                   name='email'
-                  className='input input-bordered'
+                  className='input input-bordered w-full mt-3'
                   placeholder='example@gmail.com'
                   value={email}
                   onChange={handleChange}

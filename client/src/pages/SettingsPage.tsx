@@ -119,12 +119,12 @@ const SettingsPage = () => {
     (deleteError as ApiError | undefined)?.data?.message ||
     "something went wrong.";
   return (
-    <div className='min-h-screen flex items-start justify-center py-10 px-4'>
-      <div className='flex flex-col gap-6 w-full max-w-md'>
+    <div className='min-h-screen flex items-start justify-center py-10 px-4 bg-slate-900'>
+      <div className='flex flex-col gap-6 w-full max-w-md '>
         {/* --- Profile --- */}
-        <div className='card bg-base-100 shadow-xl'>
-          <div className='card-body'>
-            <h2 className='card-title mb-4'>Profile</h2>
+        <div className='card shadow-xl  bg-blue-600/25 rounded-2xl'>
+          <div className='card-body '>
+            <h2 className='card-title mb-2'>Profile</h2>
 
             {isProfileError && (
               <div className='alert alert-error mb-3'>
@@ -162,7 +162,7 @@ const SettingsPage = () => {
                   />
                 </div>
               </label>
-              <p className='text-xs text-base-content/50'>
+              <p className='text-md text-base-content/50'>
                 Click to change avatar
               </p>
               <input
@@ -181,7 +181,7 @@ const SettingsPage = () => {
               <input
                 type='text'
                 id='name'
-                className='input input-bordered'
+                className='input input-bordered w-full'
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -194,7 +194,7 @@ const SettingsPage = () => {
               <input
                 type='email'
                 id='email'
-                className='input input-bordered input-disabled'
+                className='input input-bordered input-disabled w-full'
                 value={user?.email ?? ""}
                 disabled
               />
@@ -216,7 +216,7 @@ const SettingsPage = () => {
         </div>
 
         {/* --- Change Password --- */}
-        <div className='card bg-base-100 shadow-xl'>
+        <div className='card shadow-xl  bg-blue-600/25 rounded-2xl'>
           <div className='card-body'>
             <h2 className='card-title mb-2'>Change Password</h2>
 
@@ -233,7 +233,7 @@ const SettingsPage = () => {
               <input
                 type='password'
                 id='current-password'
-                className='input input-bordered'
+                className='input input-bordered w-full'
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 autoComplete='current-password'
@@ -247,7 +247,7 @@ const SettingsPage = () => {
               <input
                 type='password'
                 id='new-password'
-                className='input input-bordered'
+                className='input input-bordered w-full'
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 autoComplete='new-password'
@@ -273,7 +273,7 @@ const SettingsPage = () => {
         </div>
 
         {/* --- Delete Account --- */}
-        <div className='card bg-base-100 shadow-xl border border-error'>
+        <div className='card shadow-xl border  bg-red-600/25 rounded-2xl border-error'>
           <div className='card-body'>
             <h2 className='card-title mb-4 text-error'>Delete Account</h2>
 

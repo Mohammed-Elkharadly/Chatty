@@ -41,15 +41,19 @@ const Sidebar = () => {
 
   return (
     <nav
-      className={`flex flex-col min-h-dvh bg-base-200
-        transition-all duration-300 bg-[linear-gradient(68deg,#ff0081,black)]
-      ${isOpen ? "w-60 absolute z-40 md:relative md:z-auto" : "w-16"}`}
+      className={`flex flex-col min-h-dvh  bg-slate-900
+    transition-all duration-300 
+    ${
+      isOpen
+        ? "w-60 fixed inset-y-0 left-0 z-40 md:relative md:inset-auto md:z-auto"
+        : "w-16"
+    }`}
     >
       {/* Toggle */}
       <div className='p-3'>
         <button
           type='button'
-          className='btn btn-square btn-ghost w-full hover:bg-fuchsia-800'
+          className='btn btn-square btn-ghost w-full hover:bg-blue-900'
           onClick={() => setIsOpen(!isOpen)}
           aria-label='Toggle sidebar'
         >

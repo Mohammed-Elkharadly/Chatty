@@ -77,7 +77,7 @@ const ChatPage = () => {
   if (!selectedContact) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 text-base-content/50">
-        <span className="text-6xl">💬</span>
+        <span className="text-6xl mt-5">💬</span>
         <p className="text-lg">Select a contact to start chatting</p>
       </div>
     );

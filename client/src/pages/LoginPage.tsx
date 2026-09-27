@@ -54,11 +54,8 @@ const LoginPage = () => {
 
   return (
     <>
-      <main
-        className='flex min-h-screen items-center justify-center
-            bg-[linear-gradient(68deg,#ff0081,black)]'
-      >
-        <div className='card w-96 bg-fuchsia-900 shadow-xl'>
+      <main className='flex min-h-screen items-center justify-center bg-slate-900 rounded-xl'>
+        <div className='card w-96  bg-blue-900/25 shadow-xl'>
           <div className='card-body'>
             <h2 className='mb-4 card-title text-2xl font-bold'>Login</h2>
             {/** error alert */}
@@ -76,7 +73,7 @@ const LoginPage = () => {
                   ref={emailRef}
                   type='email'
                   placeholder='example@gmail.com'
-                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered mt-2 ${isError ? "input-error" : ""}`}
                   id='email'
                   name='email'
                   onChange={handleCange}
@@ -92,7 +89,7 @@ const LoginPage = () => {
                 <input
                   type='password'
                   placeholder='************'
-                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered mt-2 ${isError ? "input-error" : ""}`}
                   id='password'
                   name='password'
                   onChange={handleCange}
@@ -100,6 +97,7 @@ const LoginPage = () => {
                   required
                   autoComplete='off'
                 />
+
               </div>
               <button
                 type='submit'
@@ -114,7 +112,10 @@ const LoginPage = () => {
               </button>
             </form>
             <div className='mb-2 text-right'>
-              <Link to='/forgot-password' className='link link-hover text-md link-primary'>
+              <Link
+                to='/forgot-password'
+                className='link link-hover text-md link-primary'
+              >
                 Forgot password?
               </Link>
             </div>

@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type SubmitEvent } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useResetPasswordMutation } from "../features/auth/authEndpoints";
 import type { ApiError } from "../app/middleware/rtkQueryErrorMiddlewarw";
 import toast from "react-hot-toast";
@@ -7,11 +7,11 @@ import toast from "react-hot-toast";
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   // backend redirects here as: `${CLIENT_URL}/reset-password?token=...`
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") ?? "";
+  const { token = "" } = useParams<{ token: string }>();
 
   const [password, setPassword] = useState("");
-  const [resetPassword, { isLoading, isError, error }] = useResetPasswordMutation();
+  const [resetPassword, { isLoading, isError, error }] =
+    useResetPasswordMutation();
 
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,11 +29,13 @@ const ResetPasswordPage = () => {
 
   if (!token) {
     return (
-      <main className='flex min-h-screen items-center justify-center bg-[linear-gradient(68deg,#ff0081,black)]'>
-        <div className='card w-96 bg-fuchsia-900 shadow-xl'>
+      <main className='flex min-h-screen items-center justify-center  bg-slate-900'>
+        <div className='card w-96  bg-slate-900/25 shadow-xl'>
           <div className='card-body'>
             <h2 className='card-title text-2xl font-bold mb-4'>Invalid Link</h2>
-            <p className='text-sm mb-4'>This reset link is missing its token.</p>
+            <p className='text-sm mb-4'>
+              This reset link is missing its token.
+            </p>
             <Link to='/forgot-password' className='link link-primary'>
               Request a new one
             </Link>
@@ -44,8 +46,8 @@ const ResetPasswordPage = () => {
   }
 
   return (
-    <main className='flex min-h-screen items-center justify-center bg-[linear-gradient(68deg,#ff0081,black)]'>
-      <div className='card w-96 bg-fuchsia-900 shadow-xl'>
+    <main className='flex min-h-screen items-center justify-center bg-slate-900'>
+      <div className='card w-96 bg-blue-900/25 shadow-xl rounded-xl'>
         <div className='card-body'>
           <h2 className='mb-4 card-title text-2xl font-bold'>Reset Password</h2>
 
@@ -63,19 +65,29 @@ const ResetPasswordPage = () => {
               <input
                 type='password'
                 id='password'
-                className={`input input-bordered ${isError ? "input-error" : ""}`}
+                className={`input input-bordered w-full mt-3 ${isError ? "input-error" : ""}`}
                 placeholder='************'
                 value={password}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
                 required
                 autoComplete='new-password'
               />
-              <span className='text-xs opacity-60 mt-1'>
+              <span className='block text-md opacity-60 mt-2'>
                 8+ chars, upper, lower, number, special character
               </span>
             </div>
-            <button type='submit' className='btn w-full btn-primary' disabled={isLoading || !password}>
-              {isLoading ? <span className='loading loading-sm loading-spinner' /> : "Reset Password"}
+            <button
+              type='submit'
+              className='btn w-full btn-primary'
+              disabled={isLoading || !password}
+            >
+              {isLoading ? (
+                <span className='loading loading-sm loading-spinner' />
+              ) : (
+                "Reset Password"
+              )}
             </button>
           </form>
         </div>

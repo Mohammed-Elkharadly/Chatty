@@ -37,7 +37,7 @@ const ChatInput = ({
 
   return (
     <>
-      <div className="flex items-center gap-2 border-t border-base-300 bg-base-100 px-4 py-3">
+      <div className="flex items-center gap-2 border-t bg-slate-900 px-4 py-3">
         <label htmlFor="message" aria-label="input message label"></label>
         <input
           type="text"
@@ -96,7 +96,7 @@ const ChatInput = ({
         <button
           type="button"
           onClick={onSend}
-          className="btn btn-sm bg-fuchsia-900 hover:bg-fuchsia-500"
+          className="btn btn-sm bg-blue-900 hover:bg-blue-600"
           disabled={isSending || (!content.trim() && !image)}
         >
           {isSending ? (

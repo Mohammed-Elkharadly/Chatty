@@ -62,7 +62,7 @@ const SidebarContent = ({
 
   const content = (
     <>
-      <div className="flex-1 overflow-y-auto py-2">
+      <div className="flex-1 overflow-y-auto p-2">
         {isFetching && isOpen && (
           <span className="text-xs text-base-content/50 px-4 py-2">
             Searching...
@@ -79,9 +79,9 @@ const SidebarContent = ({
             <button
               key={contact._id}
               type="button"
-              className={`flex items-center w-full px-4 py-2 hover:bg-fuchsia-900 transition-colors cursor-pointer mb-2 rounded-xl
+              className={`flex items-center w-full px-4 py-2 hover:bg-blue-700 transition-colors cursor-pointer mb-2 rounded-xl
                 ${isOpen ? 'gap-3' : 'justify-center'}
-                ${selectedContact?._id === contact._id ? 'bg-fuchsia-900' : ''}`}
+                ${selectedContact?._id === contact._id ? ' bg-blue-900' : ''}`}
               onClick={() => dispatch(setSelectedContact(contact))}
             >
               <div className="flex items-center gap-3 relative">

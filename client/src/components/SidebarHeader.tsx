@@ -29,7 +29,7 @@ const SidebarHeader = ({
       {/** Avatar + Name */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-400">
         <div className="avatar placeholder relative">
-          <div className="bg-neutral text-neutral-content rounded-full border border-gray-200 w-10 flex items-center justify-center">
+          <div className="bg-slate-900 text-neutral-content rounded-full border border-gray-200 w-10 flex items-center justify-center">
             {user?.avatar ? (
               <img
                 src={user?.avatar}

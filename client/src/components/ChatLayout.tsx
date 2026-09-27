@@ -6,10 +6,10 @@ const ChatLayout = () => {
   // connect socket when autheticated
   useSocket();
   return (
-    <div className="flex min-h-screen ">
+    <div className="flex min-h-screen">
       <Sidebar />
       <main
-        className="flex-1">
+        className="flex-1  bg-slate-900 border-l">
         <Outlet />
       </main>
     </div>

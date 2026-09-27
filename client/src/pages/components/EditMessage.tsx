@@ -97,14 +97,14 @@ const EditMessage = ({
               <input
                 id='update-content'
                 name='update-content'
-                className='w-full px-2 py-2 rounded-md bg-gray-700 text-white outline-none focus:ring-2 focus:ring-yellow-500'
+                className='w-full px-2 py-2 rounded-md bg-gray-700 text-white outline-none focus:ring-2 focus:ring-yellow-500/25'
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
               />
               <button
                 type='button'
                 onClick={handleUpdate}
-                className='cursor-pointer p-2 w-full bg-yellow-500 hover:bg-yellow-300 border-none rounded-md'
+                className='cursor-pointer p-2 w-full bg-yellow-600/25 hover:bg-yellow-300/25 border-none rounded-md'
               >
                 Update
               </button>
@@ -137,7 +137,7 @@ const EditMessage = ({
               <button
                 type='button'
                 onClick={handleUpdate}
-                className='cursor-pointer p-2 w-full bg-yellow-500 hover:bg-yellow-300 border-none rounded-md'
+                className='cursor-pointer p-2 w-full bg-yellow-600/25 hover:bg-yellow-300/25 border-none rounded-md'
               >
                 Update
               </button>
@@ -151,7 +151,7 @@ const EditMessage = ({
                 <input
                   id='update-content'
                   name='update-content'
-                  className='w-full px-2 py-2 rounded-md bg-gray-700 text-white outline-none focus:ring-2 focus:ring-yellow-500'
+                  className='w-full px-2 py-2 rounded-md bg-gray-700 text-white outline-none focus:ring-2 focus:ring-yellow-500/25'
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
                 />
@@ -159,7 +159,7 @@ const EditMessage = ({
               <button
                 type='button'
                 onClick={handleUpdate}
-                className='cursor-pointer p-2 w-full bg-yellow-500 hover:bg-yellow-300 border-none rounded-md'
+                className='cursor-pointer p-2 w-full bg-yellow-600/25 hover:bg-yellow-300/25 border-none rounded-md'
               >
                 Update
               </button>

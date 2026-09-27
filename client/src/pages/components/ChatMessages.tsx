@@ -35,7 +35,7 @@ const ChatMessages = () => {
 
   return (
     <>
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4 bg-[linear-gradient(68deg,#ff0081,black)]">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4  bg-slate-900 min-h-0">
         {messages.length === 0 ? (
           <p className="mt-4 text-center text-sm text-base-content/50">
             No message yet. Say hello! 👋
@@ -54,8 +54,8 @@ const ChatMessages = () => {
                   className={`max-w-xs lg:max-w-md p-3 rounded-md text-sm relative wrap-anywhere
                     ${
                       isMe
-                        ? 'bg-fuchsia-900 text-primary-content rounded-br-none'
-                        : 'bg-base-300 text-base-content rounded-bl-none'
+                        ? ' bg-blue-600/25 text-primary-content rounded-br-none' 
+                        : ' bg-gray-800 text-base-content rounded-bl-none'
                     }`}
                 >
                   {isMe && (
@@ -79,7 +79,7 @@ const ChatMessages = () => {
                               setEditingId(msg._id);
                               setOpenMenuId(null);
                             }}
-                            className="flex items-center gap-2 text-gray-100 hover:text-yellow-300 w-full cursor-pointer"
+                            className="flex items-center gap-2 text-gray-100 hover:text-yellow-300/25 w-full cursor-pointer"
                           >
                             <span className="text-sm">Update</span>
                             <FontAwesomeIcon icon={faPenToSquare} />
@@ -108,14 +108,14 @@ const ChatMessages = () => {
                   )}
                   {msg.content && <p className="pr-4">{msg.content}</p>}
                   <p
-                    className={`text-xs ${isMe ? 'text-primary-content/70 pr-3' : 'text-base-content/50'}`}
+                    className={`text-xs relative -bottom-2.5 ${isMe ? 'text-primary-content/70 pr-3' : 'text-base-content/50'}`}
                   >
                     {formatTime.format(new Date(msg.createdAt))}
                   </p>
                   {isMe && (
                     <div className="absolute bottom-0 right-1 text-sm">
                       {msg.status === 'seen' ? (
-                        <span className="text-blue-500">
+                        <span className="text-green-600">
                           <FontAwesomeIcon icon={faCheckDouble} />
                         </span>
                       ) : msg.status === 'delivered' ||
@@ -124,7 +124,7 @@ const ChatMessages = () => {
                           <FontAwesomeIcon icon={faCheckDouble} />
                         </span>
                       ) : (
-                        <span className="text-gray-400">
+                        <span className="text-gray-400 text-sm">
                           <FontAwesomeIcon icon={faCheck} />
                         </span>
                       )}
@@ -136,9 +136,9 @@ const ChatMessages = () => {
           })
         )}
         <div ref={bottomRef}></div>
-        <div
+         <div
           onClick={handleScrollDown}
-          className="absolute btn w-10 top-25 left-1/2 translate-1/2 bg-fuchsia-900 border-none hover:bg-fuchsia-500"
+          className="absolute btn w-10 top-30 left-1/2 translate-1/2  bg-blue-600/25  hover:bg-blue-900"
         >
           <FontAwesomeIcon icon={faArrowDown} />
         </div>

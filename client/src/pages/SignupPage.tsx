@@ -59,10 +59,9 @@ const SignupPage = () => {
   return (
     <>
       <main
-        className='flex min-h-screen items-center justify-center
-            bg-[linear-gradient(68deg,black,#ff0081)]'
+        className='flex min-h-screen items-center justify-center  bg-slate-900'
       >
-        <div className='card w-96 bg-fuchsia-900 shadow-xl'>
+        <div className='card w-96  bg-blue-900/25 shadow-xl rounded-xl'>
           <div className='card-body'>
             <h2 className='mb-4 card-title text-2xl font-bold'>Signup</h2>
             {/** error alert */}
@@ -80,7 +79,7 @@ const SignupPage = () => {
                   ref={nameRef}
                   type='text'
                   placeholder='John Deo'
-                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered mt-2 ${isError ? "input-error" : ""}`}
                   id='name'
                   name='name'
                   onChange={handleChange}
@@ -96,7 +95,7 @@ const SignupPage = () => {
                 <input
                   type='email'
                   placeholder='example@gmail.com'
-                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered mt-2 ${isError ? "input-error" : ""}`}
                   id='email'
                   name='email'
                   onChange={handleChange}
@@ -112,7 +111,7 @@ const SignupPage = () => {
                 <input
                   type='password'
                   placeholder='************'
-                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered mt-2 ${isError ? "input-error" : ""}`}
                   id='password'
                   name='password'
                   onChange={handleChange}
@@ -128,7 +127,7 @@ const SignupPage = () => {
                 <input
                   type='tel'
                   placeholder='+23 4576987352'
-                  className={`input input-bordered ${isError ? "input-error" : ""}`}
+                  className={`input input-bordered mt-2 ${isError ? "input-error" : ""}`}
                   id='phone'
                   name='phone'
                   onChange={handleChange}
