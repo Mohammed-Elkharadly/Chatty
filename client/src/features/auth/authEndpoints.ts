@@ -72,7 +72,7 @@ export const authApi = apiSlice.injectEndpoints({
           console.error("oAuth login failed", error);
         }
       },
-    }),   
+    }),
 
     forgotPassword: builder.mutation<{ message: string }, ForgotPasswordData>({
       query: (body) => ({
@@ -118,15 +118,21 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    verifyOtp: builder.mutation<{ message: string }, VerifyOtpData>({
+    verifyOtp: builder.mutation<AuthResponse, VerifyOtpData>({
       query: (body) => ({
         url: "/auth/otp/verify",
         method: "POST",
         body,
       }),
+      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(login({user: data.data.user}));
+        } catch (error) {
+          console.error("failed to verify Otp", error);
+        }
+      },
     }),
-
-    
   }),
 });
 
@@ -137,13 +143,11 @@ export const {
   useLoginUserMutation,
   useSignupUserMutation,
   useOAuthLoginMutation,
-  
-  
+
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useResendVerificationMutation,
   useVerifyEmailMutation,
   useSendOtpMutation,
   useVerifyOtpMutation,
-  
 } = authApi;

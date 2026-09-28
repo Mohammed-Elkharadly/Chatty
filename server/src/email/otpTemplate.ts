@@ -24,9 +24,9 @@ export function otpTemplate(
         </p>
 
         <p>
-          <a href="#">
+          <h3>
             OTP code : ${otp}
-          </a>
+          </h3>
         </p>
 
         <p>This code expires in 15 minutes.</p>

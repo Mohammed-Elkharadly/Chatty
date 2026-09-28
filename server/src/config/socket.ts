@@ -20,6 +20,8 @@ const parseCookieHeader = (header: string): Record<string, string> => {
 
 const ALLOWED_ORIGINS = [ENV.CLIENT_URL, ENV.SERVER_URL];
 
+const PRESENCE_TTL_SEC = 60 * 60 * 24; // presence key lifetime, refreshed while connected
+
 const presenceKey = (userId: string) => `presence:${userId}`;
 const ONLINE_USER_IDS_KEY = "online_user_ids";
 
@@ -34,7 +36,6 @@ const addPresence = async (
   const PRESENCE_TTL_SEC = 60 * 60 * 24;
   await redisClient.sadd(key, socketId);
   await redisClient.sadd(ONLINE_USER_IDS_KEY, userId);
-  await redisClient.expire(key, PRESENCE_TTL_SEC);
   return redisClient.smembers(ONLINE_USER_IDS_KEY);
 };
 
@@ -115,8 +116,18 @@ export const initSocketServer = (
     socket.on("group:leave", (groupId: string) => {
       socket.leave(`group:${groupId}`);
     });
+    // refresh the presence key every hour while this socket stays connected
+    const keepAlive = setInterval(
+      () => {
+        redisClient
+          .expire(presenceKey(userId), PRESENCE_TTL_SEC)
+          .catch((error) => console.error("presence refresh failed", error));
+      },
+      60 * 60 * 1000,
+    );
 
     socket.on("disconnect", () => {
+      clearInterval(keepAlive); // stop refreshing once the socket is gone
       removePresence(userId, socket.id)
         .then(({ wentOffline, onlineUserIds }) => {
           if (wentOffline) {

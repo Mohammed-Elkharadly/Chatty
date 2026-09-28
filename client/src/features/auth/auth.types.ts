@@ -25,11 +25,6 @@ export interface SignupData {
   phone: string;
 }
 
-export interface ChangePasswordData {
-  currentPassword: string;
-  newPassword: string;
-}
-
 export interface ForgotPasswordData {
   email: string;
 }
@@ -54,6 +49,7 @@ export interface SendOtpData {
 export interface VerifyOtpData {
   email: string;
   otp: string;
+  
 }
 
 export interface OAuthLoginData {
@@ -69,11 +65,4 @@ export interface AuthResponse {
 // checkAuth has no top-level message on success
 export interface CheckAuthResponse {
   data: { user: User };
-}
-
-export interface UpdateProfileResponse {
-  success: boolean;
-  data: { user: User };
-  provider: string;
-  idToken: string;
 }

@@ -428,9 +428,7 @@ export const sendOtp = async (req: Request, res: Response) => {
 
   // user doesn't exist → return the same success message (don't reveal the account doesn't exist)
   if (!user) {
-    res
-      .status(StatusCodes.OK)
-      .json({ message: "OTP code has been sent successfully!!" });
+    res.status(StatusCodes.OK).json({ message: "OTP code has been sent!" });
     return;
   }
 
@@ -451,9 +449,7 @@ export const sendOtp = async (req: Request, res: Response) => {
   }
 
   // success → tell the client the code is on its way
-  res
-    .status(StatusCodes.OK)
-    .json({ message: "OTP code has been sent successfully" });
+  res.status(StatusCodes.OK).json({ message: "OTP code has been sent" });
 };
 
 // handles: POST /api/auth/verify-otp — checks the one-time code, verifies the email, and logs the user in

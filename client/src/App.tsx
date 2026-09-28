@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import ChatLayout from "./components/ChatLayout";
 import SettingsPage from "./pages/SettingsPage";
+import { OtpLoginPage } from "./pages/OtpLoginPage";
 
 function App() {
   const { isLoading } = useCheckAuthQuery();
@@ -39,6 +40,7 @@ function App() {
         <Route path='forgot-password' element={<ForgotPasswordPage />} />
         <Route path='reset-password/:token' element={<ResetPasswordPage />} />
         <Route path='verify-email/:status' element={<VerifyEmailPage />} />
+        <Route path='otp-login' element={<OtpLoginPage />} />
       </Route>
     </Routes>
   );

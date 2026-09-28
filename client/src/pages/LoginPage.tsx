@@ -97,7 +97,6 @@ const LoginPage = () => {
                   required
                   autoComplete='off'
                 />
-
               </div>
               <button
                 type='submit'
@@ -111,21 +110,30 @@ const LoginPage = () => {
                 )}
               </button>
             </form>
-            <div className='mb-2 text-right'>
-              <Link
-                to='/forgot-password'
-                className='link link-hover text-md link-primary'
-              >
-                Forgot password?
-              </Link>
+            <div className='flex items-center justify-between'>
+              <div className='my-4'>
+                <Link
+                  to='/forgot-password'
+                  className='link link-hover text-md link-primary'
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <div className='my-4'>
+                <Link 
+                    to='/otp-login' 
+                    className='link link-hover text-md link-primary'>
+                  Sign in with a code instead
+                </Link>
+              </div>
             </div>
             <GoogleAuthButton />
-            <p className='mt-4 text-center text-md mb-4'>
+            <div className='mt-4 text-center text-md mb-4'>
               Don't have an account?{" "}
               <Link to='/signup' className='link link-primary'>
                 Signup
               </Link>
-            </p>
+            </div>
           </div>
         </div>
       </main>
