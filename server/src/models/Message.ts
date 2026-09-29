@@ -74,7 +74,6 @@ const reactionSchema = new Schema<IReactions>(
 // the main message schema
 const messageSchema = new Schema<IMessage>(
   {
-    
     // who sent the message
     senderId: {
       type: Types.ObjectId,

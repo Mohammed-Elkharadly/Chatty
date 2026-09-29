@@ -32,10 +32,6 @@ const ALLOWED_ORIGINS = [ENV.CLIENT_URL, ENV.SERVER_URL];
 // Attach Socket.IO to the HTTP server (auth, presence, rooms)
 initSocketServer(httpServer);
 
-// Parse JSON bodies, cap at 10mb (media uploads)
-app.use(express.json({ limit: "10mb" }));
-// Parse cookie-based tokens (refresh token)
-app.use(cookieParser());
 // Restrict CORS to your own client + server, allow cookies
 app.use(
   cors({
@@ -45,6 +41,11 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+// Parse JSON bodies, cap at 10mb (media uploads)
+app.use(express.json({ limit: "10mb" }));
+// Parse cookie-based tokens (refresh token)
+app.use(cookieParser());
+
 // Parse form-urlencoded bodies (login form fallback)
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Trust 1 proxy hop (behind Nginx/Cloudflare) so req.ip is correct

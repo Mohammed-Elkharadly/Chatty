@@ -1,20 +1,20 @@
-import { useState, useEffect, useRef } from 'react';
-import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { skipToken } from '@reduxjs/toolkit/query';
+import { useState, useEffect, useRef } from "react";
+import { useAppSelector, useAppDispatch } from "../app/hooks";
+import { skipToken } from "@reduxjs/toolkit/query";
 import {
   useGetMessagesQuery,
   useSendMessageMutation,
   useMarkAsReadMutation,
-} from '../features/messages/messageEndpoints';
-import { clearUnRead } from '../features/users/usersSlice';
-import { setMessages } from '../features/messages/messageSlice';
-import ChatHeader from './components/ChatHeader';
-import ChatMessages from './components/ChatMessages';
-import ChatInput from './components/ChatInput';
+} from "../features/messages/messageEndpoints";
+import { clearUnRead } from "../features/users/usersSlice";
+import { setMessages } from "../features/messages/messageSlice";
+import ChatHeader from "./components/ChatHeader";
+import ChatMessages from "./components/ChatMessages";
+import ChatInput from "./components/ChatInput";
 
 const ChatPage = () => {
-  const [content, setContent] = useState('');
-  const [image, setImage] = useState<string | null>(null);
+  const [content, setContent] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastReadRef = useRef<string | null>(null);
   const dispatch = useAppDispatch();
@@ -58,44 +58,42 @@ const ChatPage = () => {
   }, [selectedContact]);
 
   const handleSend = async () => {
-    if ((!content.trim() && !image) || !selectedContact) return;
+    if ((!content.trim() && !file) || !selectedContact) return;
+    const formData = new FormData();
+    if (content.trim()) formData.append("content", content.trim());
+    if (file) formData.append("attachment", file);
     try {
-      await sendMessage({
-        receiverId: selectedContact._id,
-        content,
-        image: image ?? undefined,
-        timestamp: Date.now(),
-      }).unwrap();
-      setContent('');
-      setImage(null);
+      await sendMessage({ receiverId: selectedContact._id, formData }).unwrap();
+      setContent("");
+      setFile(null);
       inputRef.current?.focus();
     } catch (error) {
-      console.error('Failed to send message', error);
+      console.error("Failed to send message", error);
     }
   };
 
   if (!selectedContact) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-base-content/50">
-        <span className="text-6xl mt-5">💬</span>
-        <p className="text-lg">Select a contact to start chatting</p>
+      <div className='flex flex-1 flex-col items-center justify-center gap-4 text-base-content/50'>
+        <span className='text-6xl mt-5'>💬</span>
+        <p className='text-lg'>Select a contact to start chatting</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className='flex min-h-screen flex-1 flex-col'>
         <ChatHeader />
         {/** Message*/}
         <ChatMessages />
         {/** Input */}
         <ChatInput
           content={content}
-          image={image}
+          file={file}
           isSending={isSending}
           setContent={setContent}
-          setImage={setImage}
+          setFile={setFile}
           onSend={handleSend}
           inputRef={inputRef}
         />

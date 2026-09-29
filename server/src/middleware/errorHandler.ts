@@ -4,7 +4,7 @@ import { MulterError } from "multer";
 
 // maps Multer's internal error codes to human-readable messages
 const MULTER_ERROR_MESSAGES: Record<string, string> = {
-  LIMIT_FILE_SIZE: "File is too large (max 25MB)",
+  LIMIT_FILE_SIZE: "File is too large (max 10MB)",
   LIMIT_UNEXPECTED_FILE: "Unexpected file field",
   LIMIT_FILE_COUNT: "Too many files",
 };
@@ -21,19 +21,22 @@ export const errorHandler = (
   let statusCode = 500;
   let message = "Internal Server Error";
 
-  // case 1: we threw a CustomError ourselves (e.g. new CustomError("Not found", 404))
+  // we threw a CustomError ourselves (e.g. new CustomError("Not found", 404))
   if (err instanceof CustomError) {
     // use the status code and message we set when we threw it
     statusCode = err.statusCode;
     message = err.message;
   }
-  // case 2: Multer rejected the upload before our controller even ran
+  // Multer rejected the upload before our controller even ran
   else if (err instanceof MulterError) {
     statusCode = 400;
     // look up a friendly message; fall back to generic if code is unknown
     message = MULTER_ERROR_MESSAGES[err.code] ?? "File upload error";
+  } else if ((err as { type?: string }).type === "entity.too.large") {
+    statusCode = 413;
+    message = "Request body too large";
   }
-  // case 3: something unexpected (DB crash, bug, etc.)
+  // something unexpected (DB crash, bug, etc.)
   else {
     // log the full stack trace so you can debug; don't send it to the client
     console.log(err);

@@ -103,7 +103,7 @@ const useSocket = () => {
     }
 
     return () => {};
-  }, [isAuthenticated, userId]);
+  }, [isAuthenticated, userId, dispatch]);
 
   useEffect(() => {
     return () => {

@@ -9,7 +9,7 @@ const ChatLayout = () => {
     <div className="flex min-h-screen">
       <Sidebar />
       <main
-        className="flex-1  bg-slate-900 border-l">
+        className="flex-1  bg-slate-900">
         <Outlet />
       </main>
     </div>

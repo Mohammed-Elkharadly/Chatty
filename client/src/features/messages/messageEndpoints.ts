@@ -1,13 +1,13 @@
-import { apiSlice } from '../../lib/mainApiSlice';
+import { apiSlice } from "../../lib/mainApiSlice";
 import {
   setMessages,
   addMessage,
   removeMessage,
   editMessage,
-} from './messageSlice';
-import type { Message } from './message.types';
+} from "./messageSlice";
+import type { Message } from "./message.types";
 
-export interface RawMessage extends Omit<Message, 'senderId' | 'receiverId'> {
+export interface RawMessage extends Omit<Message, "senderId" | "receiverId"> {
   senderId:
     | string
     | { _id: string; name: string; email: string; avatar?: string };
@@ -16,13 +16,14 @@ export interface RawMessage extends Omit<Message, 'senderId' | 'receiverId'> {
 
 export const normalizeMessage = (msg: RawMessage): Message => ({
   ...msg,
-  senderId: typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId,
+  senderId: typeof msg.senderId === "object" ? msg.senderId._id : msg.senderId,
   receiverId:
-    typeof msg.receiverId === 'object' ? msg.receiverId._id : msg.receiverId,
+    typeof msg.receiverId === "object" ? msg.receiverId._id : msg.receiverId,
 });
 
 export const messageApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    // query<returned response from the server, userId from query params">
     getMessages: builder.query<{ messages: Message[] }, string>({
       query: (userId) => `/messages/${userId}`,
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
@@ -30,69 +31,61 @@ export const messageApi = apiSlice.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(setMessages(data.messages.map(normalizeMessage)));
         } catch (error) {
-          console.error('Faild to fetch messages', error);
+          console.error("Faild to fetch messages", error);
         }
       },
     }),
     sendMessage: builder.mutation<
       { message: Message },
-      {
-        receiverId: string;
-        content?: string;
-        image?: string;
-        timestamp?: number;
-      }
+      { receiverId: string; formData: FormData }
     >({
-      query: ({ receiverId, ...body }) => ({
+      query: ({ receiverId, formData }) => ({
         url: `/messages/send/${receiverId}`,
-        method: 'POST',
-        body,
+        method: "POST",
+        body: formData, // multipart: multer reads the "attachment" field
       }),
-      invalidatesTags: ['Contacts'],
+      invalidatesTags: ["Contacts"],
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
           dispatch(addMessage(normalizeMessage(data.message)));
         } catch (error) {
-          console.error('Failed to send message', error);
+          console.error("Failed to send message", error);
         }
       },
     }),
     markAsRead: builder.mutation<{ message: string }, string>({
       query: (senderId) => ({
         url: `/messages/read/${senderId}`,
-        method: 'PATCH',
+        method: "PATCH",
       }),
     }),
     deleteMessage: builder.mutation<{ message: string }, string>({
       query: (messageId) => ({
         url: `/messages/${messageId}`,
-        method: 'DELETE',
+        method: "DELETE",
       }),
       async onQueryStarted(messageId, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
           dispatch(removeMessage(messageId));
         } catch (error) {
-          console.error('Failed to delete message', error);
+          console.error("Failed to delete message", error);
         }
       },
     }),
-    updateMessage: builder.mutation<
-      Message,
-      { _id: string; content?: string; image?: string }
-    >({
-      query: ({ _id, ...body }) => ({
+    updateMessage: builder.mutation<Message, { _id: string; content: string }>({
+      query: ({ _id, content }) => ({
         url: `/messages/${_id}`,
-        method: 'PATCH',
-        body: body,
+        method: "PATCH",
+        body: content,
       }),
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
           dispatch(editMessage(data));
         } catch (error) {
-          console.error('Faild to update message', error);
+          console.error("Faild to update message", error);
         }
       },
     }),

@@ -56,6 +56,6 @@ export const upload = multer({
   storage, // use memory storage
   fileFilter, // reject disallowed MIME types
   limits: {
-    fileSize: 25 * 1024 * 1024, // 25MB max per file (matches Cloudinary free tier image limit)
+    fileSize: 10 * 1024 * 1024, // 25MB max per file (matches Cloudinary free tier image limit)
   },
 });   

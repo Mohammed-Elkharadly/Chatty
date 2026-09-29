@@ -19,7 +19,7 @@ export const uploadBufferToCloudinary = async (
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         // store under the specified folder
-        options: options.folder,
+        folder: options.folder,
         // "auto" lets Cloudinary detect the type; override if you know it
         resource_type: options.resourceType ?? "auto",
       },

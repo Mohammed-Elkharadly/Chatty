@@ -41,7 +41,7 @@ const Sidebar = () => {
 
   return (
     <nav
-      className={`flex flex-col min-h-dvh  bg-slate-900
+      className={`flex flex-col min-h-dvh border-r border-base-300 bg-base-100
     transition-all duration-300 
     ${
       isOpen

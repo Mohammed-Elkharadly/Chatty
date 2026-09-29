@@ -7,7 +7,7 @@ const ChatHeader = () => {
   return (
     <>
       {/** Header */}
-      <div className="flex items-center gap-3 border-b border-gray-400  bg-slate-900 px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-base-300 bg-base-100 px-4 py-3">
         <div className="placeholder avatar">
           <div className="flex w-10 items-center justify-center rounded-full bg-neutral text-neutral-content">
             {selectedContact.avatar ? (
