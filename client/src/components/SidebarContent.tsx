@@ -1,8 +1,8 @@
-import { useEffect, useMemo } from 'react';
-import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { useEffect, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { useLazySearchUsersQuery } from "../features/users/usersEndpoints";
-import { setSelectedContact } from '../features/users/usersSlice';
-import type { Contact } from '../features/users/users.types';
+import { setSelectedContact } from "../features/users/usersSlice";
+import type { Contact } from "../features/users/users.types";
 
 interface SidebarContentProps {
   isOpen: boolean;
@@ -36,14 +36,7 @@ const SidebarContent = ({
       triggerSearch(query);
     }, 300);
 
-    const clearSearch = setTimeout(() => {
-      setSearch('');
-    }, 20000);
-
-    return () => {
-      clearTimeout(delayDebounceFn);
-      clearTimeout(clearSearch);
-    };
+    return () => clearTimeout(delayDebounceFn);
   }, [search, triggerSearch, setSearch]);
 
   const displayContacts: Contact[] = useMemo(() => {
@@ -62,15 +55,15 @@ const SidebarContent = ({
 
   const content = (
     <>
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className='flex-1 overflow-y-auto p-2'>
         {isFetching && isOpen && (
-          <span className="text-xs text-base-content/50 px-4 py-2">
+          <span className='text-xs text-base-content/50 px-4 py-2'>
             Searching...
           </span>
         )}
         {displayContacts?.length === 0 ? (
           isOpen ? (
-            <span className="text-xs text-base-content/50 px-4 py-2">
+            <span className='text-xs text-base-content/50 px-4 py-2'>
               No contacts found
             </span>
           ) : null
@@ -78,27 +71,28 @@ const SidebarContent = ({
           displayContacts.map((contact: Contact) => (
             <button
               key={contact._id}
-              type="button"
+              type='button'
+              aria-label={contact.name}
               className={`flex items-center w-full px-4 py-2 hover:bg-blue-700 transition-colors cursor-pointer mb-2 rounded-xl
-                ${isOpen ? 'gap-3' : 'justify-center'}
-                ${selectedContact?._id === contact._id ? ' bg-blue-900' : ''}`}
+                ${isOpen ? "gap-3" : "justify-center"}
+                ${selectedContact?._id === contact._id ? " bg-blue-900" : ""}`}
               onClick={() => dispatch(setSelectedContact(contact))}
             >
-              <div className="flex items-center gap-3 relative">
-                <div className="avatar placeholder shrink-0">
+              <div className='flex items-center gap-3 relative'>
+                <div className='avatar placeholder shrink-0'>
                   <div
-                    className="bg-neutral text-neutral-content
+                    className='bg-neutral text-neutral-content
                     rounded-full w-10 flex items-center justify-center
-                    border border-gray-200"
+                    border border-gray-200'
                   >
                     {contact.avatar ? (
                       <img
                         src={contact.avatar}
                         alt={contact.name}
-                        className="rounded-full"
+                        className='rounded-full'
                       />
                     ) : (
-                      <span className="text-xs">
+                      <span className='text-xs'>
                         {contact.name.charAt(0).toUpperCase()}
                       </span>
                     )}
@@ -107,17 +101,17 @@ const SidebarContent = ({
                 {/** online indicator */}
                 <span
                   className={`absolute z-50 top-0 left-0 w-2 h-2 rounded-full 
-                  ${onlineUsers.includes(contact._id) ? 'bg-success' : 'bg-gray-400'}`}
+                  ${onlineUsers.includes(contact._id) ? "bg-success" : "bg-gray-400"}`}
                 ></span>
                 {isOpen && (
-                  <span className="truncate text-sm">{contact.name}</span>
+                  <span className='truncate text-sm'>{contact.name}</span>
                 )}
                 {/** unread counts */}
                 {unReadCounts[contact._id] > 0 && (
                   <span
-                    className="flex items-center justify-center
+                    className='flex items-center justify-center
                         absolute w-5 h-5 rounded-full bg-red-600
-                        text-white text-xs -top-2 left-6 "
+                        text-white text-xs -top-2 left-6 '
                   >
                     {unReadCounts[contact._id]}
                   </span>

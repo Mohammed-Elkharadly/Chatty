@@ -32,13 +32,14 @@ const ChatInput = ({
 
   // temporary local URL for image previews (null for non-images)
   const previewUrl = useMemo(
-    () => (file?.type.startsWith("/image") ? URL.createObjectURL(file) : null),
+    () => (file?.type.startsWith("image/") ? URL.createObjectURL(file) : null),
     [file],
   );
 
   // frees the temporary URL when the file changes or the component unmounts
   useEffect(() => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (!previewUrl) return;
+    return () => URL.revokeObjectURL(previewUrl);
   }, [previewUrl]);
 
   // validates the picked file's size before accepting it

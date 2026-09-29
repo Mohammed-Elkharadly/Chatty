@@ -78,7 +78,7 @@ export const messageApi = apiSlice.injectEndpoints({
       query: ({ _id, content }) => ({
         url: `/messages/${_id}`,
         method: "PATCH",
-        body: content,
+        body: { content },
       }),
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
