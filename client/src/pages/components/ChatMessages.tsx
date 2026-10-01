@@ -134,7 +134,7 @@ const ChatMessages = () => {
         <div ref={bottomRef}></div>
         <div
           onClick={handleScrollDown}
-          className='absolute btn w-10 top-30 left-1/2 translate-1/2  bg-blue-600/25  hover:bg-blue-900'
+          className='fixed btn w-10 bottom-40 left-1/2 translate-1/2  bg-blue-600/25  hover:bg-blue-900'
         >
           <FontAwesomeIcon icon={faArrowDown} />
         </div>

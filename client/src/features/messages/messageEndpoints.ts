@@ -74,11 +74,11 @@ export const messageApi = apiSlice.injectEndpoints({
         }
       },
     }),
-    updateMessage: builder.mutation<Message, { _id: string; content: string }>({
-      query: ({ _id, content }) => ({
+    updateMessage: builder.mutation<Message, { _id: string; body: FormData }>({
+      query: ({ _id, body }) => ({
         url: `/messages/${_id}`,
         method: "PATCH",
-        body: { content },
+        body,
       }),
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {

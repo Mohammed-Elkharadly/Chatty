@@ -42,7 +42,7 @@ export const uploadBufferToCloudinary = async (
 // removes a file from Cloudinary by its public_id
 export const deleteFromCloudinary = async (
   publicId: string, // the unique identifier Cloudinary returns after upload
-  resourceType: "image" | "video" | "raw" = "image", // must match the type used during upload
+  resourceType: "image" | "video" | "raw", // must match the type used during upload
 ) => {
   // call Cloudinary's destroy API to permanently delete the file
   await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });

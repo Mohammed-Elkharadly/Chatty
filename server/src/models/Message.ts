@@ -8,6 +8,7 @@ interface IAttachment {
   mimeType: string; // original MIME type (e.g. "image/png")
   fileName: string; // original filename the user uploaded
   fileSize: number; // size in bytes
+  resourceType: "image" | "video" | "raw";
 }
 
 // shape of a single reaction on a message
@@ -48,6 +49,10 @@ const attachmentSchema = new Schema<IAttachment>(
     fileName: { type: String, required: true },
     // file size in bytes (shown in the UI, used for download progress)
     fileSize: { type: Number, required: true },
+    resourceType: {
+      type: String,
+      enum: ["image", "video", "raw"],
+    },
   },
   { _id: false }, // embedded subdoc doesn't need its own _id (saves space)
 );

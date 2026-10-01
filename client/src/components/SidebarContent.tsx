@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { useLazySearchUsersQuery } from "../features/users/usersEndpoints";
 import { setSelectedContact } from "../features/users/usersSlice";
@@ -21,6 +22,7 @@ const SidebarContent = ({
   onlineUsers,
 }: SidebarContentProps) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const unReadCounts = useAppSelector((state) => state.users.unReadCounts);
 
   // lazy search query
@@ -53,7 +55,19 @@ const SidebarContent = ({
     );
   }, [search, searchData, contacts]);
 
-  const content = (
+  const sortedContacts = useMemo(() => {
+    if (!selectedContact) return displayContacts;
+    const selected = displayContacts.find(
+      (contact) => contact._id === selectedContact._id,
+    );
+    if (!selected) return displayContacts;
+    return [
+      selected,
+      ...displayContacts.filter((c) => c._id !== selectedContact._id),
+    ];
+  }, [displayContacts, selectedContact]);
+
+  return (
     <>
       <div className='flex-1 overflow-y-auto p-2'>
         {isFetching && isOpen && (
@@ -68,15 +82,18 @@ const SidebarContent = ({
             </span>
           ) : null
         ) : (
-          displayContacts.map((contact: Contact) => (
+          sortedContacts.map((contact: Contact) => (
             <button
               key={contact._id}
               type='button'
               aria-label={contact.name}
-              className={`flex items-center w-full px-4 py-2 hover:bg-blue-700 transition-colors cursor-pointer mb-2 rounded-xl
+              className={`flex items-center w-full px-2 py-1 hover:bg-blue-700 transition-colors cursor-pointer mb-2 rounded-xl
                 ${isOpen ? "gap-3" : "justify-center"}
                 ${selectedContact?._id === contact._id ? " bg-blue-900" : ""}`}
-              onClick={() => dispatch(setSelectedContact(contact))}
+              onClick={() => {
+                dispatch(setSelectedContact(contact));
+                navigate("/");
+              }}
             >
               <div className='flex items-center gap-3 relative'>
                 <div className='avatar placeholder shrink-0'>
@@ -123,7 +140,6 @@ const SidebarContent = ({
       </div>
     </>
   );
-  return content;
 };
 
 export default SidebarContent;

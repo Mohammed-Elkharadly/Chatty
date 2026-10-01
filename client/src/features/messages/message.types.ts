@@ -4,6 +4,7 @@ export interface Attachment {
   mimiType: string;
   fileName: string;
   fileSize: number; // bytes
+  resourceType: "image" | "vedio" | "raw";
 }
 
 export interface Message {

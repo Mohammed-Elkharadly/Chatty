@@ -80,6 +80,7 @@ export const sendGroupMessage = async (req: Request, res: Response) => {
         mimeType: file.mimetype,
         fileName: file.originalname,
         fileSize: file.size,
+        resourceType: uploadResult.resource_type as "image" | "video" | "raw",
       };
     } catch (error) {
       // Cloudinary is down or rejected the file

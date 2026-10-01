@@ -189,6 +189,7 @@ export const sendMessage = async (req: Request, res: Response) => {
   if (file) {
     // check the MIME type is in our whitelist
     const attachmentType = getAttachmentType(file.mimetype);
+
     if (!attachmentType) {
       throw new CustomError("Unsupported file type", StatusCodes.BAD_REQUEST);
     }
@@ -205,6 +206,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         mimeType: file.mimetype,
         fileName: file.originalname,
         fileSize: file.size,
+        resourceType: uploadResult.resource_type as "image" | "video" | "raw",
       };
     } catch (error) {
       throw new CustomError(
@@ -251,8 +253,8 @@ export const sendMessage = async (req: Request, res: Response) => {
         },
         data: {
           messageId: newMessage._id.toString(),
-          type: "message"
-        }
+          type: "message",
+        },
       });
     }
   }
@@ -374,7 +376,7 @@ export const deleteMessage = async (req: Request, res: Response) => {
   if (typeof messageId !== "string" || !Types.ObjectId.isValid(messageId)) {
     throw new CustomError("Invalid message ID", StatusCodes.BAD_REQUEST);
   }
-  
+
   const messageObjectId = new Types.ObjectId(messageId);
 
   // fetch the message
@@ -411,7 +413,9 @@ export const deleteMessage = async (req: Request, res: Response) => {
 
   // tell the receiver's open tabs to remove this message from their UI
   // getSocketsForUser returns an array
-  const receiverSockets = await getSocketsForUser(message.receiverId.toString());
+  const receiverSockets = await getSocketsForUser(
+    message.receiverId.toString(),
+  );
   receiverSockets.forEach((socketId) =>
     io.to(socketId).emit("message:delete", { messageId }),
   );
@@ -473,6 +477,7 @@ export const updateMessage = async (req: Request, res: Response) => {
         mimeType: file.mimetype,
         fileName: file.originalname,
         fileSize: file.size,
+        resourceType: uploadResult.resource_type as "image" | "video" | "raw",
       };
     } catch (error) {
       throw new CustomError(
@@ -504,7 +509,9 @@ export const updateMessage = async (req: Request, res: Response) => {
 
   // tell the receiver's open tabs the message was edited
   // getSocketsForUser returns an array
-  const receiverSockets = await getSocketsForUser(message.receiverId.toString());
+  const receiverSockets = await getSocketsForUser(
+    message.receiverId.toString(),
+  );
   receiverSockets.forEach((socketId) => {
     const data = {
       _id: message._id,
@@ -612,7 +619,10 @@ export const searchMessages = async (req: Request, res: Response) => {
   }
   // must have a search term
   if (!query || typeof query !== "string" || query.trim().length < 2) {
-    throw new CustomError("Search term must be at least 2 characters", StatusCodes.BAD_REQUEST);
+    throw new CustomError(
+      "Search term must be at least 2 characters",
+      StatusCodes.BAD_REQUEST,
+    );
   }
 
   const otherObjectId = new Types.ObjectId(otherUserId);
@@ -629,4 +639,4 @@ export const searchMessages = async (req: Request, res: Response) => {
     .limit(20);
 
   res.status(StatusCodes.OK).json({ messages: results });
-};   
+};

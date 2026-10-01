@@ -1,173 +1,179 @@
 import { useState, useRef, type ChangeEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmarkCircle, faUpload } from "@fortawesome/free-solid-svg-icons";
+import {
+  faXmarkCircle,
+  faUpload,
+  faFile,
+  faPenToSquare,
+} from "@fortawesome/free-solid-svg-icons";
 import { useUpdateMessageMutation } from "../../features/messages/messageEndpoints";
 import type { Message } from "../../features/messages/message.types";
+import toast from "react-hot-toast";
+
+const MAX_FILE_MB = 10;
 
 interface UpdateMessageProps {
   message: Message;
   isEditing: boolean;
   setEditingId: React.Dispatch<React.SetStateAction<string | null>>;
 }
+
 const EditMessage = ({
   message,
   isEditing,
   setEditingId,
 }: UpdateMessageProps) => {
-  const hasContent = !!message.content;
-  const hasImage = !!message.image;
-
+  const [newContent, setNewContent] = useState(message.content ?? "");
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [newContent, setNewContent] = useState(message?.content || "");
-  const [newImage, setNewImage] = useState(message?.image || "");
 
   const [updateMessage] = useUpdateMessageMutation();
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => setNewImage(reader.result as string);
-    reader.readAsDataURL(file);
+  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0];
+    e.target.value = "";
+    if (!picked) return;
+    if (picked.size > MAX_FILE_MB * 1024 * 1024) {
+      toast.error(`File is too large (max ${MAX_FILE_MB}MB)`);
+      return;
+    }
+    setNewFile(picked);
+  };
+
+  const handleCancel = () => {
+    setNewContent(message.content ?? "");
+    setNewFile(null);
+    setEditingId(null);
   };
 
   const handleUpdate = async () => {
-    const hasChanges =
-      newContent !== message.content || newImage !== message.image;
-    if (!hasChanges || (!newContent?.trim() && !newImage)) {
-      setEditingId(null);
+    const trimmed = newContent.trim();
+    const contentChanged = trimmed !== (message.content ?? "");
+    const hasAttachmentChange = !!newFile;
+
+    // nothing changed
+    if (!contentChanged && !hasAttachmentChange) {
+      handleCancel();
       return;
     }
+
+    const formData = new FormData();
+    if (contentChanged) formData.append("content", trimmed);
+    if (newFile) formData.append("attachment", newFile);
+
+    setIsUpdating(true);
     try {
-      await updateMessage({
-        _id: message._id,
-        content: newContent,
-        image: newImage,
-      }).unwrap();
+      await updateMessage({ _id: message._id, body: formData }).unwrap();
       setEditingId(null);
     } catch (error) {
       console.error("Failed to update message", error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  return (
-    <>
-      {isEditing && (
-        <div
-          className='absolute -top-2.5 right-3 w-70 bg-gray-800 border
-          border-gray-700 rounded-md shadow-lg
-           z-50 p-2'
-        >
-          <button
-            type='button'
-            className='cursor-pointer absolute top-1 right-1'
-            aria-label='cancel'
-            onClick={() => setEditingId(null)}
-          >
-            <FontAwesomeIcon icon={faXmarkCircle} />
-          </button>
-          {hasContent && hasImage ? (
-            <div className='flex flex-col gap-3 pt-5 pb-3'>
-              <img
-                src={newImage}
-                alt='new image'
-                className='w-full max-h-60 object-contain rounded-lg bg-black/20'
-              />
-              <label htmlFor='update-file' aria-label='update-file'></label>
-              <input
-                type='file'
-                ref={fileInputRef}
-                accept='image/*'
-                name='update-file'
-                id='update-file'
-                className='hidden'
-                onChange={handleImageChange}
-              />
-              <button
-                type='button'
-                aria-label='upload'
-                className='btn btn-ghost btn-sm btn-square bg-gray-500'
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <FontAwesomeIcon icon={faUpload} />
-              </button>
+  if (!isEditing) return null;
 
-              <label htmlFor='update-content'>Update</label>
-              <input
-                id='update-content'
-                name='update-content'
-                className='w-full px-2 py-2 rounded-md bg-gray-700 text-white outline-none focus:ring-2 focus:ring-yellow-500/25'
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-              />
-              <button
-                type='button'
-                onClick={handleUpdate}
-                className='cursor-pointer p-2 w-full bg-yellow-600/25 hover:bg-yellow-300/25 border-none rounded-md'
-              >
-                Update
-              </button>
-            </div>
-          ) : hasImage ? (
-            <div className='flex flex-col gap-3 pt-5 pb-3'>
-              <img
-                src={newImage}
-                alt={newImage}
-                className='w-full max-h-60 object-contain rounded-lg bg-black/20'
-              />
-              <label htmlFor='update-file' aria-label='update-file'></label>
-              <input
-                type='file'
-                ref={fileInputRef}
-                accept='image/*'
-                name='update-file'
-                id='update-file'
-                className='hidden'
-                onChange={handleImageChange}
-              />
-              <button
-                type='button'
-                aria-label='upload'
-                className='btn btn-ghost btn-sm btn-square bg-gray-500'
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <FontAwesomeIcon icon={faUpload} />
-              </button>
-              <button
-                type='button'
-                onClick={handleUpdate}
-                className='cursor-pointer p-2 w-full bg-yellow-600/25 hover:bg-yellow-300/25 border-none rounded-md'
-              >
-                Update
-              </button>
-            </div>
+  const attachmentPreviewUrl =
+    newFile && newFile.type.startsWith("image/")
+      ? URL.createObjectURL(newFile)
+      : !newFile && message.attachment?.type === "image"
+        ? message.attachment.url
+        : null;
+
+  const attachmentName = newFile?.name ?? message.attachment?.fileName;
+
+  return (
+    <div className='absolute -top-2.5 right-3 z-50 w-80 rounded-md border border-gray-700 bg-gray-800 p-2 shadow-lg'>
+      {/* Banner */}
+      <div className='flex items-center justify-between rounded-md bg-yellow-600/20 px-2 py-1 text-xs'>
+        <span className='flex items-center gap-2'>
+          <FontAwesomeIcon icon={faPenToSquare} />
+          Updating message...
+        </span>
+        <button
+          type='button'
+          aria-label='cancel edit'
+          className='btn btn-ghost btn-xs btn-circle'
+          onClick={handleCancel}
+        >
+          <FontAwesomeIcon icon={faXmarkCircle} />
+        </button>
+      </div>
+
+      {/* Attachment preview */}
+      {(newFile || message.attachment) && (
+        <div className='relative mt-2 flex w-fit max-w-full items-center gap-2 rounded-lg bg-base-200 p-2 pr-8'>
+          {attachmentPreviewUrl ? (
+            <img
+              src={attachmentPreviewUrl}
+              alt='preview'
+              className='h-16 w-16 rounded-lg object-cover'
+            />
           ) : (
-            <div className='flex flex-col gap-3 pt-5 pb-3'>
-              <div className='flex flex-col gap-2'>
-                <label htmlFor='update-content' className='text-center'>
-                  Update
-                </label>
-                <input
-                  id='update-content'
-                  name='update-content'
-                  className='w-full px-2 py-2 rounded-md bg-gray-700 text-white outline-none focus:ring-2 focus:ring-yellow-500/25'
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                />
-              </div>
-              <button
-                type='button'
-                onClick={handleUpdate}
-                className='cursor-pointer p-2 w-full bg-yellow-600/25 hover:bg-yellow-300/25 border-none rounded-md'
-              >
-                Update
-              </button>
-            </div>
+            <>
+              <FontAwesomeIcon icon={faFile} />
+              <span className='max-w-40 truncate text-sm'>
+                {attachmentName}
+              </span>
+            </>
+          )}
+          {newFile && (
+            <button
+              type='button'
+              aria-label='remove attachment'
+              className='btn btn-circle btn-xs btn-error absolute top-1 right-1'
+              onClick={() => setNewFile(null)}
+            >
+              <FontAwesomeIcon icon={faXmarkCircle} />
+            </button>
           )}
         </div>
       )}
-    </>
+
+      {/* Text + actions */}
+      <div className='mt-2 flex items-center gap-2'>
+        <input
+          type='text'
+          className='input-bordered input input-sm flex-1'
+          value={newContent}
+          placeholder='Edit message...'
+          onChange={(e) => setNewContent(e.target.value)}
+          disabled={isUpdating}
+          autoComplete='off'
+        />
+        <input
+          type='file'
+          ref={fileInputRef}
+          accept='image/*,video/*,audio/*,application/pdf,.doc,.docx'
+          className='hidden'
+          onChange={handleFile}
+        />
+        <button
+          type='button'
+          aria-label='upload'
+          className='btn btn-ghost btn-sm btn-square bg-gray-500'
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUpdating}
+        >
+          <FontAwesomeIcon icon={faUpload} />
+        </button>
+        <button
+          type='button'
+          onClick={handleUpdate}
+          className='btn btn-sm bg-blue-900 hover:bg-primary'
+          disabled={isUpdating}
+        >
+          {isUpdating ? (
+            <span className='loading loading-xs loading-spinner' />
+          ) : (
+            "Update"
+          )}
+        </button>
+      </div>
+    </div>
   );
 };
+
 export default EditMessage;

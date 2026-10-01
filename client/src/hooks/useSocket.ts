@@ -47,11 +47,13 @@ const useSocket = () => {
       }
       return;
     }
+    // if the socket is not connected and client ask for connection then start the connection
+    if (!socket.connected) {
+      socket.connect();
+    }
+
     const announceOnline = () => socket.emit("users:online", userId);
     socket.on("connect", announceOnline);
-    if (socket.connected) {
-      announceOnline();
-    }
 
     if (!isSetup.current) {
       socket.on("users:online", (userIds: string[]) => {
@@ -62,13 +64,11 @@ const useSocket = () => {
         const normalizedMessage = normalizeMessage(message);
         dispatch(addMessage(normalizedMessage));
 
-        if (message.senderId && typeof message.senderId === "object") {
-          const senderIdString = message.senderId._id;
+        if (normalizedMessage.senderId !== userIdRef.current) {
 
-          if (senderIdString !== userId?.toString()) {
-            dispatch(usersApi.util.invalidateTags(["Contacts"]));
-            dispatch(unReadMessage(senderIdString));
-          }
+          dispatch(usersApi.util.invalidateTags(["Contacts"]));
+          dispatch(unReadMessage(normalizedMessage.senderId));
+          
         }
         if (
           !isMutedRef.current &&
@@ -111,9 +111,6 @@ const useSocket = () => {
         socket.off("message:delete");
         socket.off("message:update");
         isSetup.current = false;
-      }
-      if (socket.connected) {
-        socket.disconnect();
       }
       if (audioRef.current) {
         audioRef.current.pause();

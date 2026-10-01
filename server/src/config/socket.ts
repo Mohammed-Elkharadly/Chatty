@@ -33,9 +33,10 @@ const addPresence = async (
   socketId: string,
 ): Promise<string[]> => {
   const key = presenceKey(userId);
-  const PRESENCE_TTL_SEC = 60 * 60 * 24;
   await redisClient.sadd(key, socketId);
+  await redisClient.expire(key, PRESENCE_TTL_SEC);
   await redisClient.sadd(ONLINE_USER_IDS_KEY, userId);
+  await redisClient.expire(ONLINE_USER_IDS_KEY, PRESENCE_TTL_SEC);
   return redisClient.smembers(ONLINE_USER_IDS_KEY);
 };
 
@@ -121,6 +122,9 @@ export const initSocketServer = (
       () => {
         redisClient
           .expire(presenceKey(userId), PRESENCE_TTL_SEC)
+          .catch((error) => console.error("presence refresh failed", error));
+        redisClient
+          .expire(ONLINE_USER_IDS_KEY, PRESENCE_TTL_SEC)
           .catch((error) => console.error("presence refresh failed", error));
       },
       60 * 60 * 1000,

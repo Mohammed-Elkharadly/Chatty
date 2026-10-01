@@ -119,7 +119,7 @@ const SettingsPage = () => {
     (deleteError as ApiError | undefined)?.data?.message ||
     "something went wrong.";
   return (
-    <div className='min-h-screen flex items-start justify-center py-10 px-4 bg-slate-900'>
+    <div className='h-screen flex items-start justify-center py-10 px-4 bg-slate-900 overflow-auto'>
       <div className='flex flex-col gap-6 w-full max-w-md '>
         {/* --- Profile --- */}
         <div className='card shadow-xl  bg-blue-600/25 rounded-2xl'>

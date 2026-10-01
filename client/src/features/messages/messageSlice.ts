@@ -31,15 +31,15 @@ const messageSlice = createSlice({
     },
     editMessage: (
       state,
-      action: PayloadAction<Pick<Message, "_id" | "content" | "attachment">>,
+      action: PayloadAction<Message>,
     ) => {
-      const { _id, content, attachment } = action.payload;
+      const { _id, content, attachment, updatedAt } = action.payload;
       const index = state.messages.findIndex((msg) => msg._id === _id);
       if (index !== -1) {
         if (content !== undefined) state.messages[index].content = content;
         if (attachment !== undefined)
           state.messages[index].attachment = attachment;
-        state.messages[index].updatedAt = new Date().toISOString();
+        state.messages[index].updatedAt = updatedAt ?? new Date().toISOString();
       }
     },
   },

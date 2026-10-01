@@ -11,7 +11,7 @@ const AttachmentView = ({ attachment }: { attachment: Attachment }) => {
       <img
         src={url}
         alt={fileName}
-        className='mb-2 max-h-64 max-w-full cursor-pointer rounded-md'
+        className='mb-2 mr-2.5 max-h-64 max-w-full cursor-pointer rounded-md'
         onClick={() => window.open(url, "_blank")}
       />
     );
@@ -21,12 +21,12 @@ const AttachmentView = ({ attachment }: { attachment: Attachment }) => {
       <video
         src={url}
         controls
-        className='mb-2 max-h-64 max-w-full rounded-md'
+        className='mb-2 mr-2.5 max-h-64 max-w-full rounded-md'
       />
     );
   }
   if (type === "audio") {
-    return <audio src={url} controls className='mb-2 max-w-full' />;
+    return <audio src={url} controls className='mb-2 pr-2.5 max-w-full' />;
   }
 
   // pdf / document: compact download chip
@@ -35,7 +35,7 @@ const AttachmentView = ({ attachment }: { attachment: Attachment }) => {
       href={url}
       target='_blank'
       rel='noreferrer'
-      className='mb-2 flex items-center gap-2 rounded-md bg-black/20 p-2 hover:bg-black/30'
+      className='mb-2 mr-2.5 flex items-center gap-2 rounded-md bg-black/20 p-2 hover:bg-black/30'
     >
       <FontAwesomeIcon
         icon={type === "pdf" ? faFilePdf : faFileWord}

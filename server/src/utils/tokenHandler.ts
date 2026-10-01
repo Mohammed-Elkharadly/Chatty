@@ -11,7 +11,7 @@ export class TokenHandler {
       // Marks the cookie to be used with HTTPS only
       secure: ENV.NODE_ENV === "production",
       // CSRF 'Cross-Site Request Forgery' attacks
-      sameSite: "strict",
+      sameSite: "lax",
       //  expiry time relative to the current time in milliseconds
       maxAge: Number(ENV.JWT_EXPIRES_IN) * this.oneDay,
     });
@@ -20,7 +20,7 @@ export class TokenHandler {
     res.cookie("refreshToken", token, {
       httpOnly: true,
       secure: ENV.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       maxAge: Number(ENV.JWT_REFRESH_EXPIRES_IN) * this.oneDay,
     });
   }
@@ -28,14 +28,14 @@ export class TokenHandler {
     res.clearCookie("accessToken", {
       httpOnly: true,
       secure: ENV.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       expires: new Date(0), // sets expiration to the past 'deletes it'
     });
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: ENV.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
       expires: new Date(0),
     });
   }

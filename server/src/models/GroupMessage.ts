@@ -8,6 +8,7 @@ interface IAttachment {
   mimeType: string;    // original MIME type
   fileName: string;    // original filename
   fileSize: number;    // bytes
+  resourceType: "image" | "video" | "raw";
 }
 
 // shape of a single reaction (who + which emoji)
@@ -48,6 +49,10 @@ const attachmentSchema = new Schema<IAttachment>(
     mimeType: { type: String, required: true },
     fileName: { type: String, required: true },
     fileSize: { type: Number, required: true },
+    resourceType: {
+      type: String,
+      enum: ["image", "video", "raw"],
+    },
   },
   { _id: false },
 );

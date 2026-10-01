@@ -1,5 +1,5 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { Contact } from './users.types';
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import type { Contact } from "./users.types";
 
 interface UserState {
   contacts: Contact[];
@@ -18,7 +18,7 @@ const initialState: UserState = {
 };
 
 const usersSlice = createSlice({
-  name: 'users',
+  name: "users",
   initialState,
   reducers: {
     setOnlineUsers: (state, action: PayloadAction<string[]>) => {
@@ -30,9 +30,11 @@ const usersSlice = createSlice({
       }
     },
     setContacts: (state, action: PayloadAction<Contact[]>) => {
-      const existingIds = new Set(state.contacts.map((c) => c._id));
-      const newContacts = state.contacts.filter((c) => !existingIds.has(c._id));
-      state.contacts = [...action.payload, ...newContacts];
+      const incomingIds = new Set(action.payload.map((contact) => contact._id));
+      const kept = state.contacts.filter((contact) =>
+        !incomingIds.has(contact._id),
+      );
+      state.contacts = [...action.payload, ...kept];
     },
     setSelectedContact: (state, action: PayloadAction<Contact | null>) => {
       state.selectedContact = action.payload;
