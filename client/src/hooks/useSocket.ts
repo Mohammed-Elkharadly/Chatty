@@ -40,9 +40,7 @@ const useSocket = () => {
         socket.off("messages:read");
         socket.off("message:delete");
         socket.off("message:update");
-        if (socket.connected) {
-          socket.disconnect();
-        }
+        if (socket.connected) socket.disconnect();
         isSetup.current = false;
       }
       return;
@@ -53,6 +51,7 @@ const useSocket = () => {
     }
 
     const announceOnline = () => socket.emit("users:online", userId);
+    
     socket.on("connect", announceOnline);
 
     if (!isSetup.current) {
@@ -99,7 +98,9 @@ const useSocket = () => {
       isSetup.current = true;
     }
 
-    return () => {};
+    return () => {
+      socket.off("connect", announceOnline);
+    };
   }, [isAuthenticated, userId, dispatch]);
 
   useEffect(() => {

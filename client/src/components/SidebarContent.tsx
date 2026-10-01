@@ -86,7 +86,6 @@ const SidebarContent = ({
             <button
               key={contact._id}
               type='button'
-              aria-label={contact.name}
               className={`flex items-center w-full px-2 py-1 hover:bg-blue-700 transition-colors cursor-pointer mb-2 rounded-xl
                 ${isOpen ? "gap-3" : "justify-center"}
                 ${selectedContact?._id === contact._id ? " bg-blue-900" : ""}`}
@@ -127,8 +126,8 @@ const SidebarContent = ({
                 {unReadCounts[contact._id] > 0 && (
                   <span
                     className='flex items-center justify-center
-                        absolute w-5 h-5 rounded-full bg-red-600
-                        text-white text-xs -top-2 left-6 '
+                        absolute w-4 h-4 rounded-full bg-red-600
+                        text-white text-[5px] -top-2 left-6 '
                   >
                     {unReadCounts[contact._id]}
                   </span>
