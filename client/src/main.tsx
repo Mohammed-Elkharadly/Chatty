@@ -7,16 +7,19 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Provider } from "react-redux";
 import { store } from "./app/store.ts";
 import { Toaster } from "react-hot-toast";
+import { ChatProvider } from "./contexts/chat/ChatProvider.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <Provider store={store}>
         <Router>
-          <>
-            <Toaster position='top-center' reverseOrder={false} />
-            <App />
-          </>
+          <ChatProvider>
+            <>
+              <Toaster position='top-center' reverseOrder={false} />
+              <App />
+            </>
+          </ChatProvider>
         </Router>
       </Provider>
     </GoogleOAuthProvider>

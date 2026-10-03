@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { setOnlineUsers, unReadMessage } from "../features/users/usersSlice";
 import {
   addMessage,
-  markMessagesAsRead,
+  readMessage,
   removeMessage,
   editMessage,
 } from "../features/messages/messageSlice";
@@ -84,7 +84,7 @@ const useSocket = () => {
       });
 
       socket.on("messages:read", () => {
-        dispatch(markMessagesAsRead());
+        dispatch(readMessage());
       });
 
       socket.on("message:update", (data: Message) => {

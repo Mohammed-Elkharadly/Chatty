@@ -23,16 +23,14 @@ const usersSlice = createSlice({
   reducers: {
     setOnlineUsers: (state, action: PayloadAction<string[]>) => {
       // only update if different
-      if (
-        JSON.stringify(state.onlineUsers) !== JSON.stringify(action.payload)
-      ) {
+      if (state.onlineUsers !== action.payload) {
         state.onlineUsers = action.payload;
       }
     },
     setContacts: (state, action: PayloadAction<Contact[]>) => {
       const incomingIds = new Set(action.payload.map((contact) => contact._id));
-      const kept = state.contacts.filter((contact) =>
-        !incomingIds.has(contact._id),
+      const kept = state.contacts.filter(
+        (contact) => !incomingIds.has(contact._id),
       );
       state.contacts = [...action.payload, ...kept];
     },

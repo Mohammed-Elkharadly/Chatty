@@ -1,44 +1,12 @@
-import { useState, useEffect } from "react";
-import { setContacts } from "../features/users/usersSlice";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
-import { useAppSelector, useAppDispatch } from "../app/hooks";
-import { useGetChatHistoryQuery } from "../features/users/usersEndpoints";
-import { useLogoutUserMutation } from "../features/users/usersEndpoints";
+import { useSidebar } from "../contexts/sidebar/useSidebar";
 import SidebarHeader from "./SidebarHeader";
 import SidebarContent from "./SidebarContent";
 import SidebarFooter from "./SidebarFooter";
-import toast from "react-hot-toast";
 
 const Sidebar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState("");
-
-  const dispatch = useAppDispatch();
-
-  const { user } = useAppSelector((state) => state.auth);
-  const { selectedContact, contacts, onlineUsers } = useAppSelector(
-    (state) => state.users,
-  );
-  const [logoutUser, { isLoading: isLoggingOut }] = useLogoutUserMutation();
-
-  const { data: Newcontacts } = useGetChatHistoryQuery();
-
-  useEffect(() => {
-    if (Newcontacts) {
-      dispatch(setContacts(Newcontacts));
-    }
-  }, [Newcontacts, dispatch]);
-
-  const handleLogout = async () => {
-    try {
-      const data = await logoutUser().unwrap();
-      toast.success(data.message);
-    } catch (error) {
-      console.error("Failed to logout", error);
-    }
-  };
-
+  const { isOpen, setIsOpen } = useSidebar();
   return (
     <nav
       className={`flex flex-col min-h-dvh border-r border-base-300 bg-base-100
@@ -62,28 +30,11 @@ const Sidebar = () => {
       </div>
 
       {/** Sidebar header section */}
-      <SidebarHeader
-        isOpen={isOpen}
-        user={user}
-        search={search}
-        setSearch={setSearch}
-      />
-
-      {/** siderbar content or contacts list section */}
-      <SidebarContent
-        isOpen={isOpen}
-        contacts={contacts}
-        selectedContact={selectedContact}
-        search={search}
-        setSearch={setSearch}
-        onlineUsers={onlineUsers}
-      />
-
-      <SidebarFooter
-        isOpen={isOpen}
-        isLoggingOut={isLoggingOut}
-        handleLogout={handleLogout}
-      />
+      <SidebarHeader />
+      {/** siderbar contacts list section */}
+      <SidebarContent />
+      {/** siderbar footer section */}
+      <SidebarFooter />
     </nav>
   );
 };

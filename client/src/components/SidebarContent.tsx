@@ -1,30 +1,24 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../app/hooks";
+import { useAppDispatch } from "../app/hooks";
 import { useLazySearchUsersQuery } from "../features/users/usersEndpoints";
 import { setSelectedContact } from "../features/users/usersSlice";
 import type { Contact } from "../features/users/users.types";
+import { useSidebar } from "../contexts/sidebar/useSidebar";
 
-interface SidebarContentProps {
-  isOpen: boolean;
-  contacts: Contact[];
-  selectedContact: Contact | null;
-  search: string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
-  onlineUsers: string[];
-}
-const SidebarContent = ({
-  isOpen,
-  contacts,
-  selectedContact,
-  search,
-  setSearch,
-  onlineUsers,
-}: SidebarContentProps) => {
+const SidebarContent = () => {
+  const {
+    isOpen,
+    contacts,
+    selectedContact,
+    search,
+    setSearch,
+    onlineUsers,
+    unReadCounts,
+  } = useSidebar();
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const unReadCounts = useAppSelector((state) => state.users.unReadCounts);
-
   // lazy search query
   const [triggerSearch, { data: searchData, isFetching }] =
     useLazySearchUsersQuery();
@@ -126,8 +120,8 @@ const SidebarContent = ({
                 {unReadCounts[contact._id] > 0 && (
                   <span
                     className='flex items-center justify-center
-                        absolute w-4 h-4 rounded-full bg-red-600
-                        text-white text-[5px] -top-2 left-6 '
+                        absolute w-5 h-5 rounded-full bg-red-600
+                        text-white text-xs -top-2 left-6 '
                   >
                     {unReadCounts[contact._id]}
                   </span>

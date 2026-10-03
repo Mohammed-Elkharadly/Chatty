@@ -13,6 +13,7 @@ import ChatLayout from "./components/ChatLayout";
 import SettingsPage from "./pages/SettingsPage";
 import { OtpLoginPage } from "./pages/OtpLoginPage";
 
+
 function App() {
   const { isLoading } = useCheckAuthQuery();
 

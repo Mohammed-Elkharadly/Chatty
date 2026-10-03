@@ -1,18 +1,11 @@
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { useSidebar } from "../contexts/sidebar/useSidebar";
 
-interface SidebarFooterProps {
-  isOpen: boolean;
-  isLoggingOut: boolean;
-  handleLogout: () => void;
-}
 
-const SidebarFooter = ({
-  isOpen,
-  isLoggingOut,
-  handleLogout,
-}: SidebarFooterProps) => {
+const SidebarFooter = () => {
+  const { isOpen, isLoggingOut, handleLogout } = useSidebar();
   return (
     <>
       <div className='border-t border-amber-50 p-3 flex flex-col gap-2'>

@@ -19,15 +19,15 @@ const messageSlice = createSlice({
     addMessage: (state, action: PayloadAction<Message>) => {
       state.messages.push(action.payload);
     },
-    markMessagesAsRead: (state) => {
+    readMessage: (state) => {
       state.messages = state.messages.map((msg) => ({
         ...msg,
         status: "seen" as const,
       }));
     },
     removeMessage: (state, action: PayloadAction<string>) => {
-      const messageId = action.payload;
-      state.messages = state.messages.filter((msg) => msg._id !== messageId);
+      const messageId = String(action.payload);
+      state.messages = state.messages.filter((msg) => String(msg._id) !== messageId);
     },
     editMessage: (
       state,
@@ -48,7 +48,7 @@ const messageSlice = createSlice({
 export const {
   setMessages,
   addMessage,
-  markMessagesAsRead,
+  readMessage,
   removeMessage,
   editMessage,
 } = messageSlice.actions;

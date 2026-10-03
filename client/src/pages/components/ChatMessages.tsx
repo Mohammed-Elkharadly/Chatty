@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { useAppSelector } from "../../app/hooks";
+import { useRef } from "react";
+import { useChat } from "../../contexts/chat/useChat";
 import DeleteMessage from "./DeleteMessage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -9,7 +9,7 @@ import {
   faArrowDown,
   faPenToSquare,
 } from "@fortawesome/free-solid-svg-icons";
-import EditMessage from "./EditMessage";
+// import EditMessage from "./EditMessage";
 import AttachmentView from "./AttachmentView";
 
 const formatTime = new Intl.DateTimeFormat("en-US", {
@@ -18,15 +18,17 @@ const formatTime = new Intl.DateTimeFormat("en-US", {
 });
 
 const ChatMessages = () => {
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const {
+    selectedContact,
+    messages,
+    user,
+    onlineUsers,
+    openMenuId,
+    setOpenMenuId,
+    handleStartEdit,
+  } = useChat();
 
-  const user = useAppSelector((state) => state.auth.user);
-  const { selectedContact, onlineUsers } = useAppSelector(
-    (state) => state.users,
-  );
-  const messages = useAppSelector((state) => state.messages.messages);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   const handleScrollDown = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -45,7 +47,10 @@ const ChatMessages = () => {
           messages.map((msg) => {
             const isMe = msg.senderId === user?.id;
             const isMenuOpen = openMenuId === msg._id;
-            const isEditing = editingId === msg._id;
+            const isEdited =
+              !!msg.updatedAt &&
+              new Date(msg.updatedAt) > new Date(msg.createdAt);
+
             return (
               <div
                 key={msg._id}
@@ -77,7 +82,7 @@ const ChatMessages = () => {
                             type='button'
                             aria-label='update message'
                             onClick={() => {
-                              setEditingId(msg._id);
+                              handleStartEdit(msg);
                               setOpenMenuId(null);
                             }}
                             className='flex items-center gap-2 text-gray-100 hover:text-yellow-300/25 w-full cursor-pointer'
@@ -86,27 +91,23 @@ const ChatMessages = () => {
                             <FontAwesomeIcon icon={faPenToSquare} />
                           </button>
 
-                          <DeleteMessage
-                            message={msg}
-                            setOpenMenuId={setOpenMenuId}
-                          />
+                          <DeleteMessage message={msg} />
                         </div>
                       )}
-                      <EditMessage
-                        message={msg}
-                        setEditingId={setEditingId}
-                        isEditing={isEditing}
-                      />
+                      {/* <EditMessage message={msg} /> */}
                     </div>
                   )}
                   {msg.attachment && (
                     <AttachmentView attachment={msg.attachment} />
                   )}
-                  {msg.content && <p className='pr-4'>{msg.content}</p>}
+                  {msg.content && <p className="pr-2">{msg.content}</p>}
                   <p
                     className={`text-xs relative -bottom-2.5 ${isMe ? "text-primary-content/70 pr-3" : "text-base-content/50"}`}
                   >
                     {formatTime.format(new Date(msg.createdAt))}
+                    {isEdited && (
+                      <span className='text-yellow-200/70 px-1'>(edited)</span>
+                    )}
                   </p>
                   {isMe && (
                     <div className='absolute bottom-0 right-1 text-sm'>

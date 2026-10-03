@@ -1,14 +1,11 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { useDeleteMessageMutation } from '../../features/messages/messageEndpoints';
-import type { Message } from '../../features/messages/message.types';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { useDeleteMessageMutation } from "../../features/messages/messageEndpoints";
+import type { Message } from "../../features/messages/message.types";
+import { useChat } from "../../contexts/chat/useChat";
 
-interface DeleteMessageProps {
-  message: Message;
-  setOpenMenuId: React.Dispatch<React.SetStateAction<string | null>>;
-}
-
-const DeleteMessage = ({ message, setOpenMenuId }: DeleteMessageProps) => {
+const DeleteMessage = ({ message }: { message: Message }) => {
+  const { setOpenMenuId } = useChat();
   const [deleteMessage] = useDeleteMessageMutation();
 
   const handleDelete = async () => {
@@ -16,19 +13,19 @@ const DeleteMessage = ({ message, setOpenMenuId }: DeleteMessageProps) => {
       await deleteMessage(message._id).unwrap();
       setOpenMenuId(null);
     } catch (error) {
-      console.error('Failed to delete message', error);
+      console.error("Failed to delete message", error);
     }
   };
 
   return (
     <>
       <button
-        type="button"
-        className="flex items-center gap-2 text-gray-100 hover:text-red-600 w-full cursor-pointer"
+        type='button'
+        className='flex items-center gap-2 text-gray-100 hover:text-red-600 w-full cursor-pointer'
         onClick={handleDelete}
-        aria-label="delete"
+        aria-label='delete'
       >
-        <span className="text-sm">Delete</span>
+        <span className='text-sm'>Delete</span>
         <FontAwesomeIcon icon={faTrash} />
       </button>
     </>
