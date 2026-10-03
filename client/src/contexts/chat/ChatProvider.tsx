@@ -73,7 +73,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   // focus on selected contact
   useEffect(() => {
     inputRef.current?.focus();
-  }, [selectedContact]);
+  }, [selectedContact?._id]);
 
   const handleSend = async () => {
     if ((!content.trim() && !file) || !selectedContact) return;
@@ -119,8 +119,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const formData = new FormData();
     if (contentChanged) formData.append("content", trimmed);
     if (hasNewAttachment) formData.append("attachment", file);
-    if (attachmentRemoved) formData.append("removeAttachment", "true");
-
+    if (attachmentRemoved && !hasNewAttachment && editingMessage.attachment) {
+      formData.append("removeAttachment", "true");
+    }
     try {
       await updateMessage({
         _id: editingMessage._id,

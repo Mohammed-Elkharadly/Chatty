@@ -57,7 +57,7 @@ const ChatInput = () => {
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
-    if (e.nativeEvent.isComposing) return;
+    if (e.nativeEvent.isComposing || isPending) return;
 
     if (isEditing) {
       handleUpdate();
