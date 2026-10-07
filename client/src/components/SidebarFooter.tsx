@@ -1,11 +1,17 @@
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
-import { useSidebar } from "../contexts/sidebar/useSidebar";
+import { useLogoutUserMutation } from "../features/users/usersEndpoints";
 
-
-const SidebarFooter = () => {
-  const { isOpen, isLoggingOut, handleLogout } = useSidebar();
+const SidebarFooter = ({ isOpen }: { isOpen: boolean }) => {
+  const [logoutUser, { isLoading: isLoggingOut }] = useLogoutUserMutation();
+  const handleLogout = async () => {
+    try {
+      await logoutUser().unwrap();
+    } catch (error) {
+      console.error("failed logging out", error);
+    }
+  };
   return (
     <>
       <div className='border-t border-amber-50 p-3 flex flex-col gap-2'>

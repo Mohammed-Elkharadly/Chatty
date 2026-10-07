@@ -1,12 +1,13 @@
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
-import { useSidebar } from "../contexts/sidebar/useSidebar";
 import SidebarHeader from "./SidebarHeader";
 import SidebarContent from "./SidebarContent";
 import SidebarFooter from "./SidebarFooter";
 
 const Sidebar = () => {
-  const { isOpen, setIsOpen } = useSidebar();
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
   return (
     <nav
       className={`flex flex-col min-h-dvh border-r border-base-300 bg-base-100
@@ -30,11 +31,11 @@ const Sidebar = () => {
       </div>
 
       {/** Sidebar header section */}
-      <SidebarHeader />
+      <SidebarHeader isOpen={isOpen} search={search} setSearch={setSearch}/>
       {/** siderbar contacts list section */}
-      <SidebarContent />
+      <SidebarContent isOpen={isOpen}  search={search} setSearch={setSearch}/>
       {/** siderbar footer section */}
-      <SidebarFooter />
+      <SidebarFooter isOpen={isOpen}/>
     </nav>
   );
 };

@@ -6,6 +6,7 @@ import { Message } from "../models/Message.js";
 import { User } from "../models/User.js";
 import { CustomError } from "../utils/customError.js";
 import { StatusCodes } from "http-status-codes";
+import { toCloudinaryResourceType } from "../config/cloudinary.js";
 import {
   uploadBufferToCloudinary,
   deleteFromCloudinary,
@@ -194,10 +195,12 @@ export const sendMessage = async (req: Request, res: Response) => {
       throw new CustomError("Unsupported file type", StatusCodes.BAD_REQUEST);
     }
 
+    const resourceType = toCloudinaryResourceType(attachmentType);
+
     try {
       const uploadResult = await uploadBufferToCloudinary(file.buffer, {
         folder: `Chatty/messages/${attachmentType}`,
-        resourceType: "auto",
+        resourceType,
       });
       attachment = {
         url: uploadResult.secure_url,
@@ -206,7 +209,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         mimeType: file.mimetype,
         fileName: file.originalname,
         fileSize: file.size,
-        resourceType: uploadResult.resource_type as "image" | "video" | "raw",
+        resourceType,
       };
     } catch (error) {
       throw new CustomError(
@@ -394,11 +397,12 @@ export const deleteMessage = async (req: Request, res: Response) => {
   if (message.attachment) {
     // map our type to Cloudinary's resource_type (must match what was used at upload)
     const resourceType =
-      message.attachment.type === "image"
+      message.attachment.resourceType ??
+      (message.attachment.type === "image"
         ? "image"
         : message.attachment.type === "video"
           ? "video"
-          : "raw"; // audio, pdf, document → all "raw"
+          : "raw"); // audio, pdf, document → all "raw"
 
     try {
       await deleteFromCloudinary(message.attachment.publicId, resourceType);
@@ -462,13 +466,16 @@ export const updateMessage = async (req: Request, res: Response) => {
   if (file) {
     // check the MIME type is in our whitelist
     const attachmentType = getAttachmentType(file.mimetype);
+
     if (!attachmentType) {
       throw new CustomError("Unsupported file type", StatusCodes.BAD_REQUEST);
     }
+    const resourceType = toCloudinaryResourceType(attachmentType);
+
     try {
       const uploadResult = await uploadBufferToCloudinary(file.buffer, {
         folder: `Chatty/messages/${attachmentType}`,
-        resourceType: "auto",
+        resourceType,
       });
       message.attachment = {
         url: uploadResult.secure_url,
@@ -477,7 +484,7 @@ export const updateMessage = async (req: Request, res: Response) => {
         mimeType: file.mimetype,
         fileName: file.originalname,
         fileSize: file.size,
-        resourceType: uploadResult.resource_type as "image" | "video" | "raw",
+        resourceType,
       };
     } catch (error) {
       throw new CustomError(
@@ -513,12 +520,7 @@ export const updateMessage = async (req: Request, res: Response) => {
     message.receiverId.toString(),
   );
   receiverSockets.forEach((socketId) => {
-    const data = {
-      _id: message._id,
-      content: message.content,
-      attachment: message.attachment,
-    };
-    io.to(socketId).emit("message:update", data);
+    io.to(socketId).emit("message:update", message);
   });
 
   res.status(StatusCodes.OK).json(message);
@@ -599,6 +601,15 @@ export const reactToMessage = async (req: Request, res: Response) => {
     }),
   );
 
+  // notify the user who reacted too
+  const mySockets = await getSocketsForUser(loggedInUserId.toString());
+
+  mySockets.forEach((id) =>
+    io.to(id).emit("message:reaction", {
+      messageId: message._id,
+      reactions: message.reactions,
+    }),
+  );
   res.status(StatusCodes.OK).json({ reactions: message.reactions });
 };
 

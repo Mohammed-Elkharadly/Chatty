@@ -1,4 +1,4 @@
-import { escapeHtml } from "./welcomeTemplate.js";
+import { escapeHtml } from "./emailHandler.js";
 export function otpTemplate(
   name: string,
   otp: string,

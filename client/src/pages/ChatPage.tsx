@@ -1,11 +1,23 @@
-import { useChat } from "../contexts/chat/useChat";
+import { useState } from "react";
 import ChatHeader from "./components/ChatHeader";
 import ChatMessages from "./components/ChatMessages";
 import ChatInput from "./components/ChatInput";
-
+import { useAppSelector } from "../app/hooks";
 
 const ChatPage = () => {
-  const { selectedContact } = useChat();
+  const selectedContact = useAppSelector(
+    (state) => state.users.selectedContact,
+  );
+  // shared between ChatMessages (sets it via the Update button) and
+  // ChatInput (reads it to prefill the input + show the edit banner)
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [prevContactId, setPrevContactId] = useState(selectedContact?._id);
+  if (selectedContact?._id !== prevContactId) {
+    setPrevContactId(selectedContact?._id);
+    setEditingId(null); // contact changed → cancel any in-progress edit
+  }
+
   if (!selectedContact) {
     return (
       <div className='flex flex-1 flex-col items-center justify-center gap-4 text-base-content/50'>
@@ -16,13 +28,11 @@ const ChatPage = () => {
   }
 
   return (
-    <>
-      <div className='flex h-screen flex-1 flex-col'>
-        <ChatHeader />
-        <ChatMessages />
-        <ChatInput />
-      </div>
-    </>
+    <div className='flex h-screen flex-1 flex-col'>
+      <ChatHeader />
+      <ChatMessages onEdit={setEditingId} />
+      <ChatInput editingId={editingId} setEditingId={setEditingId} />
+    </div>
   );
 };
 

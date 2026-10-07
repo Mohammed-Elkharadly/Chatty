@@ -1,4 +1,4 @@
-import { escapeHtml } from "./welcomeTemplate.js";
+import { escapeHtml } from "./emailHandler.js";
 export function forgotPasswordTemplate(
   name: string,
   resetToken: string,
@@ -20,7 +20,6 @@ export function forgotPasswordTemplate(
         <h2>Verify Your Email</h2>
 
         <p>Hi ${safeName}!</p>
-          ${resetToken}
         <p>
           Click the link below to reset your password:
         </p>

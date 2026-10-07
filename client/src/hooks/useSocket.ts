@@ -11,6 +11,7 @@ import {
   readMessage,
   removeMessage,
   editMessage,
+  setReactions,
 } from "../features/messages/messageSlice";
 import socket from "../lib/socket";
 import type { Message } from "../features/messages/message.types";
@@ -40,18 +41,19 @@ const useSocket = () => {
         socket.off("messages:read");
         socket.off("message:delete");
         socket.off("message:update");
+        socket.off("message:reaction");
         if (socket.connected) socket.disconnect();
         isSetup.current = false;
       }
       return;
     }
-    // if the socket is not connected and client ask for connection then start the connection
+    
     if (!socket.connected) {
       socket.connect();
     }
 
     const announceOnline = () => socket.emit("users:online", userId);
-    
+
     socket.on("connect", announceOnline);
 
     if (!isSetup.current) {
@@ -64,10 +66,8 @@ const useSocket = () => {
         dispatch(addMessage(normalizedMessage));
 
         if (normalizedMessage.senderId !== userIdRef.current) {
-
           dispatch(usersApi.util.invalidateTags(["Contacts"]));
           dispatch(unReadMessage(normalizedMessage.senderId));
-          
         }
         if (
           !isMutedRef.current &&
@@ -95,6 +95,11 @@ const useSocket = () => {
         dispatch(removeMessage(messageId));
       });
 
+      socket.on("message:reaction", ({ messageId, reactions }) => {
+        console.log("REACTION SOCKET:", messageId, reactions);
+        dispatch(setReactions({messageId, reactions}));
+      });
+
       isSetup.current = true;
     }
 
@@ -111,6 +116,7 @@ const useSocket = () => {
         socket.off("messages:read");
         socket.off("message:delete");
         socket.off("message:update");
+        socket.off("message:reaction");
         isSetup.current = false;
       }
       if (audioRef.current) {

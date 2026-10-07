@@ -11,5 +11,12 @@ cloudinary.config({
   api_secret: ENV.CLOUDINARY_API_SECRET,
 });
 
+export function toCloudinaryResourceType(
+  type: "image" | "video" | "audio" | "pdf" | "document",
+): "image" | "video" | "raw" {
+  if (type === "image") return "image";
+  if (type === "video" || type === "audio") return "video";
+  return "raw"; // pdf, document
+}
 
 export default cloudinary;

@@ -22,10 +22,7 @@ const usersSlice = createSlice({
   initialState,
   reducers: {
     setOnlineUsers: (state, action: PayloadAction<string[]>) => {
-      // only update if different
-      if (state.onlineUsers !== action.payload) {
-        state.onlineUsers = action.payload;
-      }
+      state.onlineUsers = action.payload;
     },
     setContacts: (state, action: PayloadAction<Contact[]>) => {
       const incomingIds = new Set(action.payload.map((contact) => contact._id));

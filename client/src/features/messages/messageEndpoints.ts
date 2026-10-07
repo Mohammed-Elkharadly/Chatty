@@ -5,7 +5,7 @@ import {
   removeMessage,
   editMessage,
 } from "./messageSlice";
-import type { Message } from "./message.types";
+import type { Message, Reaction } from "./message.types";
 
 export interface RawMessage extends Omit<Message, "senderId" | "receiverId"> {
   senderId:
@@ -89,6 +89,16 @@ export const messageApi = apiSlice.injectEndpoints({
         }
       },
     }),
+    reactToMessage: builder.mutation<
+      { reactions: Reaction[] },
+      { messageId: string; emoji: string }
+    >({
+      query: ({ messageId, emoji }) => ({
+        url: `/messages/${messageId}/react`,
+        method: "PATCH",
+        body: { emoji },
+      }),
+    }),
   }),
 });
 
@@ -98,4 +108,5 @@ export const {
   useMarkAsReadMutation,
   useDeleteMessageMutation,
   useUpdateMessageMutation,
+  useReactToMessageMutation,
 } = messageApi;

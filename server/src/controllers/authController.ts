@@ -9,7 +9,6 @@ import {
   AuthProvider,
 } from "../models/User.js";
 import {
-  welcomeEmail,
   verificationEmail,
   forgotPasswordEmail,
   sendOtpEmail,
@@ -59,7 +58,6 @@ export const signup = async (req: Request, res: Response) => {
   // send welcome + verification link emails (non-blocking: if email fails, signup still succeeds)
   if (user.email) {
     try {
-      await welcomeEmail(user.name, user.email, ENV.CLIENT_URL);
       await verificationEmail(
         user.name,
         user.email,
@@ -74,10 +72,11 @@ export const signup = async (req: Request, res: Response) => {
 
   // create a short-lived JWT for this user (contains their _id)
   const accessToken = user.createJwt();
+  const refreshToken = await user.createRefreshToken();
 
   // set the accessToken as an httpOnly cookie on the response
   TokenHandler.attachAccessToken(res, accessToken);
-
+  TokenHandler.attachRefreshToken(res, refreshToken);
   // respond with 201 + the user's public data (no password, no tokens)
   res.status(StatusCodes.CREATED).json({
     message: "User created successfully",
@@ -360,9 +359,7 @@ export const resetPassword = async (req: Request, res: Response) => {
   // if it's a GET with a token but no password → user clicked the link in their email
   // redirect them to the frontend reset form, passing the token as a query param
   if (req.method === "GET" && req.params.token && !req.body.password) {
-    return res.redirect(
-      `${ENV.CLIENT_URL}/reset-password?token=${req.params.token}`,
-    );
+    return res.redirect(`${ENV.CLIENT_URL}/reset-password/${req.params.token}`);
   }
 
   // pull token + new password from the request body (POST from the frontend form)

@@ -1,15 +1,18 @@
+import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { setIsMuted } from "../features/users/usersSlice";
 import {
   faMagnifyingGlass,
   faBell,
   faBellSlash,
 } from "@fortawesome/free-solid-svg-icons";
-import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { setIsMuted } from "../features/users/usersSlice";
-import { useSidebar } from "../contexts/sidebar/useSidebar";
-
-const SidebarHeader = () => {
-  const { isOpen, user, search, setSearch } = useSidebar();
+interface SidebarContentProps {
+  isOpen: boolean;
+  search: string;
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+}
+const SidebarHeader = ({ isOpen, search, setSearch }: SidebarContentProps) => {
+  const user = useAppSelector((state) => state.auth.user);
   const { isMuted } = useAppSelector((state) => state.users);
   const dispatch = useAppDispatch();
   if (!isOpen) return null;

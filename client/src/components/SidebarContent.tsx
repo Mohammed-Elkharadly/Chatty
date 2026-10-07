@@ -1,27 +1,37 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../app/hooks";
+import { useAppSelector, useAppDispatch } from "../app/hooks";
 import { useLazySearchUsersQuery } from "../features/users/usersEndpoints";
 import { setSelectedContact } from "../features/users/usersSlice";
 import type { Contact } from "../features/users/users.types";
-import { useSidebar } from "../contexts/sidebar/useSidebar";
+import { useGetChatHistoryQuery } from "../features/users/usersEndpoints";
+import { setContacts } from "../features/users/usersSlice";
+interface SidebarContentProps {
+  isOpen: boolean;
+  search: string;
+  setSearch: React.Dispatch<React.SetStateAction<string>>;
+}
+const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
+  const contacts = useAppSelector((state) => state.users.contacts);
+  const onlineUsers = useAppSelector((state) => state.users.onlineUsers);
+  const unReadCounts = useAppSelector((state) => state.users.unReadCounts);
+  const selectedContact = useAppSelector(
+    (state) => state.users.selectedContact,
+  );
 
-const SidebarContent = () => {
-  const {
-    isOpen,
-    contacts,
-    selectedContact,
-    search,
-    setSearch,
-    onlineUsers,
-    unReadCounts,
-  } = useSidebar();
+  const { data: newContact } = useGetChatHistoryQuery();
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   // lazy search query
   const [triggerSearch, { data: searchData, isFetching }] =
     useLazySearchUsersQuery();
+
+  useEffect(() => {
+    if (newContact) {
+      dispatch(setContacts(newContact));
+    }
+  }, [dispatch, newContact]);
 
   useEffect(() => {
     const query = search.trim();

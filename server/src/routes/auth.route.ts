@@ -48,7 +48,7 @@ router.post(
 );
 
 // GET → redirects browser to frontend form page (no sensitive action, limiter optional)
-router.get("/reset-password/:token", asyncHandler(resetPassword));
+router.get("/reset-password/:token", heavyLimiter, asyncHandler(resetPassword));
 // POST → performs the actual reset
 router.post("/reset-password", heavyLimiter, asyncHandler(resetPassword));
 

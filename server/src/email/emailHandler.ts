@@ -1,4 +1,3 @@
-import { createWelcomeEmailTemplate } from './welcomeTemplate.js';
 import { verifyEmailTemplate } from './verificationTemplate.js';
 import { forgotPasswordTemplate } from './forgotPassTemplate.js'
 import { otpTemplate } from './otpTemplate.js'
@@ -6,27 +5,14 @@ import { resend, sender } from '../config/resend.js';
 import { CustomError } from '../utils/customError.js';
 import { StatusCodes } from 'http-status-codes';
 
-// sends a welcome email to a newly registered user (contains a link to the app)
-export const welcomeEmail = async (
-  name: string,     // user's name (for personalization in the email body)
-  email: string,    // recipient address
-  clientUrl: string, // frontend URL (used for the "Open App" button in the email)
-) => {
-  // call Resend's API to send the email
-  const { data, error } = await resend.emails.send({
-    from: `${sender.name} <${sender.email}>`, // sender identity (from config)
-    to: [email],
-    subject: 'Welcome to Chatty', 
-    html: createWelcomeEmailTemplate(name, clientUrl), // generate the HTML body
-  });
-  // if Resend returned an error (rate limit, invalid address, etc.)
-  if (error) {
-    console.log(error);
-    throw new CustomError('Failed to send welcome email', StatusCodes.INTERNAL_SERVER_ERROR);
-  }
-  console.log(data);
-  return data;
-};
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;") // & must go first (otherwise we'd double-encode the others)
+    .replace(/</g, "&lt;") // < → &lt; (prevents opening a new HTML tag)
+    .replace(/>/g, "&gt;") // > → &gt; (prevents closing a tag early)
+    .replace(/"/g, "&quot;") // " → &quot; (prevents breaking out of an attribute)
+    .replace(/'/g, "&#039;"); // ' → &#039; (prevents breaking out of a JS string)
+}
 
 // sends an email with a verification link (user clicks it to confirm their email)
 export const verificationEmail = async (

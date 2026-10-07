@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, ChangeEvent } from "react";
-import { useChat } from "../../contexts/chat/useChat";
+import { useAppSelector } from "../../app/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  useSendMessageMutation,
+  useUpdateMessageMutation,
+} from "../../features/messages/messageEndpoints";
 import {
   faUpload,
   faXmarkCircle,
@@ -9,29 +13,62 @@ import {
   faPenToSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
+import EmojiPicker, { Theme, type EmojiClickData } from "emoji-picker-react";
+import { faFaceSmile } from "@fortawesome/free-solid-svg-icons";
 
 const MAX_FILE_MB = 10;
 
-const ChatInput = () => {
-  const {
-    content,
-    file,
-    isPending,
-    setContent,
-    setFile,
-    inputRef,
-    editingMessage,
-    attachmentRemoved,
-    removeEditingAttachment,
-    handleCancelEdit,
-    handleSend,
-    handleUpdate,
-  } = useChat();
+interface ChatInputProps {
+  editingId: string | null; // which message is being edited, or null for a new message
+  setEditingId: React.Dispatch<React.SetStateAction<string | null>>;
+}
+
+const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
+  const [content, setContent] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [prevEditingId, setPrevEditingId] = useState(editingId);
+
+  const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
+  const [updateMessage, { isLoading: isUpdating }] = useUpdateMessageMutation();
+
+  const messages = useAppSelector((state) => state.messages.messages);
+  const selectedContact = useAppSelector(
+    (state) => state.users.selectedContact,
+  );
+
+  const editingMessage = messages.find((msg) => msg._id === editingId) ?? null;
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const emojiRef = useRef<HTMLInputElement>(null);
   const isEditing = editingMessage !== null;
+  const isPending = isSending || isUpdating;
 
-  // temporary local URL for image previews (null for non-images)
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [selectedContact?._id]);
+
+  useEffect(() => {
+    const handleClickOutSide = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current?.contains(e.target as Node)) {
+        setEmojiOpen(false);
+      }
+    };
+    if (emojiOpen) {
+      document.addEventListener("mousedown", handleClickOutSide);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutSide);
+    };
+  }, [emojiOpen]);
+
+  if (editingId !== prevEditingId) {
+    setPrevEditingId(editingId);
+    setContent(editingId ? (editingMessage?.content ?? "") : "");
+    setFile(null);
+  }
+
   const previewUrl = useMemo(
     () => (file?.type.startsWith("image/") ? URL.createObjectURL(file) : null),
     [file],
@@ -57,8 +94,7 @@ const ChatInput = () => {
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
-    if (e.nativeEvent.isComposing || isPending) return;
-
+    if (e.nativeEvent.isComposing) return;
     if (isEditing) {
       handleUpdate();
     } else {
@@ -66,14 +102,59 @@ const ChatInput = () => {
     }
   };
 
-  // attachment above the input: a freshly picked file, or the original one while editing
-  const showPickedFile = !!file;
-  const showOriginalAttachment =
-    isEditing && !file && !attachmentRemoved && !!editingMessage?.attachment;
+  const handleEmojiClick = (data: EmojiClickData) => {
+    setContent((prev) => prev + data.emoji);
+    inputRef.current?.focus();
+    setEmojiOpen(false);
+  };
+
+  const handleSend = async () => {
+    if ((!content.trim() && !file) || !selectedContact) return;
+    const formData = new FormData();
+    if (content.trim()) formData.append("content", content);
+    if (file) formData.append("attachment", file);
+    try {
+      await sendMessage({ receiverId: selectedContact._id, formData }).unwrap();
+      setContent("");
+      setFile(null);
+      inputRef.current?.focus();
+    } catch (error) {
+      console.error("Failed to send message", error);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingId || !selectedContact) return;
+    if (!content.trim() && !file) return;
+
+    const formData = new FormData();
+    if (content.trim()) formData.append("content", content);
+    if (file) formData.append("attachment", file);
+
+    try {
+      await updateMessage({ _id: editingId, body: formData }).unwrap();
+      setEditingId(null);
+      setContent("");
+      setFile(null);
+      inputRef.current?.focus();
+    } catch (error) {
+      console.error("Failed to update message", error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setContent("");
+    setFile(null);
+  };
+
+  const hasPickedFile = !!file;
+  const hasOriginalAttachment = !!editingMessage?.attachment;
+  const showAttachmentPreview =
+    hasPickedFile || (isEditing && hasOriginalAttachment);
 
   return (
     <div className='flex flex-col gap-2 border-t border-base-300 bg-base-100 px-4 py-3'>
-      {/** Edit warning banner */}
       {isEditing && (
         <div className='flex items-center justify-between rounded-md bg-yellow-600/20 px-2 py-1 text-xs'>
           <span className='flex items-center gap-2 text-yellow-200/90'>
@@ -91,8 +172,7 @@ const ChatInput = () => {
         </div>
       )}
 
-      {/** attachment preview (own row so it never squeezes the input) */}
-      {(showPickedFile || showOriginalAttachment) && (
+      {showAttachmentPreview && (
         <div className='relative flex w-fit max-w-full items-center gap-2 rounded-lg bg-base-200 p-2 pr-8'>
           {previewUrl ? (
             <img
@@ -100,8 +180,7 @@ const ChatInput = () => {
               alt='preview'
               className='h-20 w-20 rounded-lg object-cover'
             />
-          ) : showOriginalAttachment &&
-            editingMessage?.attachment?.type === "image" ? (
+          ) : editingMessage?.attachment?.type === "image" ? (
             <img
               src={editingMessage.attachment.url}
               alt='attachment'
@@ -111,20 +190,15 @@ const ChatInput = () => {
             <>
               <FontAwesomeIcon icon={faFile} />
               <span className='max-w-60 truncate text-sm'>
-                {showPickedFile
-                  ? file?.name
-                  : editingMessage?.attachment?.fileName}
+                {file ? file?.name : editingMessage?.attachment?.fileName}
               </span>
             </>
           )}
-          {/** X removes a picked file, or marks the original attachment for removal */}
           <button
             type='button'
             aria-label='remove attachment'
             className='btn btn-circle btn-xs btn-error absolute top-1 right-1'
-            onClick={() =>
-              showPickedFile ? setFile(null) : removeEditingAttachment()
-            }
+            onClick={() => setFile(null)}
           >
             <FontAwesomeIcon icon={faXmarkCircle} />
           </button>
@@ -145,6 +219,7 @@ const ChatInput = () => {
           disabled={isPending}
           autoComplete='off'
         />
+
         <input
           type='file'
           id='file'
@@ -154,6 +229,35 @@ const ChatInput = () => {
           accept='image/*,video/*,audio/*,application/pdf,.doc,.docx'
           onChange={handleFile}
         />
+        <button
+          type='button'
+          aria-label='emoji'
+          className='text-2xl text-yellow-500 cursor-pointer'
+          onClick={() => setEmojiOpen((open) => !open)}
+        >
+          <FontAwesomeIcon icon={faFaceSmile} />
+        </button>
+
+        {emojiOpen && (
+          <div ref={emojiRef} className='absolute right-0 bottom-14'>
+            <EmojiPicker
+              theme={Theme.DARK}
+              onEmojiClick={handleEmojiClick}
+              height={320}
+              width={250}
+              searchDisabled
+              previewConfig={{ showPreview: false }}
+              skinTonesDisabled
+              style={
+                {
+                  "--epr-emoji-size": "20px",
+                  "--epr-category-label-height": "20px",
+                  "--epr-header-padding": "4px",
+                } as React.CSSProperties
+              }
+            />
+          </div>
+        )}
         <button
           type='button'
           aria-label='upload'
@@ -170,7 +274,7 @@ const ChatInput = () => {
             isPending ||
             (!content.trim() &&
               !file &&
-              (!isEditing || attachmentRemoved || !editingMessage?.attachment))
+              (!isEditing || !editingMessage?.attachment))
           }
         >
           {isPending ? (
