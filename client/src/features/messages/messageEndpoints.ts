@@ -1,4 +1,4 @@
-import { apiSlice } from "../../lib/mainApiSlice";
+import { apiQuery } from "../../lib/apiQuery";
 import {
   setMessages,
   addMessage,
@@ -22,7 +22,7 @@ export const normalizeMessage = (msg: RawMessage): Message => ({
     typeof msg.receiverId === "object" ? msg.receiverId._id : msg.receiverId,
 });
 
-export const messageApi = apiSlice.injectEndpoints({
+export const messageApi = apiQuery.injectEndpoints({
   endpoints: (builder) => ({
     // query<returned response from the server, userId from query params">
     getMessages: builder.query<{ messages: Message[] }, string>({

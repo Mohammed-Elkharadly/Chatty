@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { apiSlice } from "../lib/mainApiSlice";
+import { apiQuery } from "../lib/apiQuery";
 import authReducer from "../features/auth/authSlice";
 import usersReducer from "../features/users/usersSlice";
 import { rtkQueryErrorMiddleware } from "./middleware/rtkQueryErrorMiddlewarw";
@@ -10,7 +10,7 @@ export const store = configureStore({
   // reducer: Registers every slice so each one gets its own spot in the store.
   reducer: {
     // The place where RTK Query keeps its cached API data.
-    [apiSlice.reducerPath]: apiSlice.reducer,
+    [apiQuery.reducerPath]: apiQuery.reducer,
     // Stores login/session info.
     auth: authReducer,
     // Stores user data.
@@ -22,7 +22,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
       // Makes RTK Query work (caching, loading states, refetching).
-      .concat(apiSlice.middleware)
+      .concat(apiQuery.middleware)
       // Shows an error toast whenever any API request fails.
       .concat(rtkQueryErrorMiddleware),
 });

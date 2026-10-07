@@ -1,4 +1,4 @@
-import { apiSlice } from "../../lib/mainApiSlice";
+import { apiQuery } from "../../lib/apiQuery";
 import { login, logout } from "../auth/authSlice";
 import type { Contact } from "./users.types";
 import type {
@@ -7,7 +7,7 @@ import type {
   UpdateProfileResponse,
 } from "./users.types";
 
-export const usersApi = apiSlice.injectEndpoints({
+export const usersApi = apiQuery.injectEndpoints({
   endpoints: (builder) => ({
     getChatHistory: builder.query<Contact[], void>({
       query: () => "/messages/chats",
@@ -28,7 +28,7 @@ export const usersApi = apiSlice.injectEndpoints({
         try {
           await queryFulfilled; // wait for the server to confirm logout
           dispatch(logout()); // wipe local auth state
-          dispatch(apiSlice.util.resetApiState()); // clear all cached messages/data
+          dispatch(apiQuery.util.resetApiState()); // clear all cached messages/data
         } catch (error) {
           console.error("logout failed", error);
         }
@@ -78,7 +78,7 @@ export const usersApi = apiSlice.injectEndpoints({
           try {
             await queryFulfilled;
             dispatch(logout());
-            dispatch(apiSlice.util.resetApiState());
+            dispatch(apiQuery.util.resetApiState());
           } catch (error) {
             console.error("delete account failed", error);
           }

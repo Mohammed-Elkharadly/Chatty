@@ -1,4 +1,4 @@
-import { apiSlice } from "../../lib/mainApiSlice";
+import { apiQuery } from "../../lib/apiQuery";
 import { login } from "./authSlice";
 import type {
   SignupData,
@@ -14,7 +14,7 @@ import type {
 } from "./auth.types";
 
 // injectEndpoints: Adds auth endpoints onto the base apiSlice created earlier.
-export const authApi = apiSlice.injectEndpoints({
+export const authApi = apiQuery.injectEndpoints({
   // builder: The helper RTK Query gives us to describe each request.
   endpoints: (builder) => ({
     // signupUser: Registers a new account. No side effects needed here.
