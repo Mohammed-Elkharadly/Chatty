@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFaceSmile } from "@fortawesome/free-solid-svg-icons";
 import { useReactToMessageMutation } from "../features/messages/messageEndpoints";
 
-
 interface Props {
   messageId: string;
   isMe: boolean;
@@ -52,7 +51,7 @@ const ReactionPicker = ({ messageId, isMe }: Props) => {
   }, [open]);
 
   return (
-    <div className='relative inline-block'>
+    <div ref={menuRef} className='relative inline-block'>
       <button
         type='button'
         aria-label='react'
@@ -63,10 +62,7 @@ const ReactionPicker = ({ messageId, isMe }: Props) => {
       </button>
 
       {open && (
-        <div
-          ref={menuRef}
-          className={`absolute z-50 mb-2 ${isMe ? "right-0" : "left-0"}`}
-        >
+        <div className={`absolute z-50 mb-2 ${isMe ? "right-0" : "left-0"}`}>
           {!showAll ? (
             <div className='flex items-center gap-1 rounded-full bg-gray-800 border border-gray-700 p-1.5 shadow-xl'>
               {popularEmojis.map((emoji) => (

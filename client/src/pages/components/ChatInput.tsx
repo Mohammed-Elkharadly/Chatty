@@ -24,20 +24,20 @@ interface ChatInputProps {
 }
 
 const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
-  const [content, setContent] = useState("");
+  const messages = useAppSelector((state) => state.messages.messages);
+  const editingMessage = messages.find((msg) => msg._id === editingId) ?? null;
+
+  const [content, setContent] = useState(editingMessage?.content ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [emojiOpen, setEmojiOpen] = useState(false);
-  const [prevEditingId, setPrevEditingId] = useState(editingId);
+
 
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [updateMessage, { isLoading: isUpdating }] = useUpdateMessageMutation();
 
-  const messages = useAppSelector((state) => state.messages.messages);
   const selectedContact = useAppSelector(
     (state) => state.users.selectedContact,
   );
-
-  const editingMessage = messages.find((msg) => msg._id === editingId) ?? null;
 
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -62,12 +62,6 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
       document.removeEventListener("mousedown", handleClickOutSide);
     };
   }, [emojiOpen]);
-
-  if (editingId !== prevEditingId) {
-    setPrevEditingId(editingId);
-    setContent(editingId ? (editingMessage?.content ?? "") : "");
-    setFile(null);
-  }
 
   const previewUrl = useMemo(
     () => (file?.type.startsWith("image/") ? URL.createObjectURL(file) : null),
@@ -103,7 +97,7 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
   };
 
   const handleEmojiClick = (data: EmojiClickData) => {
-    setContent((prev) => prev + data.emoji);
+    setContent((prevContent) => prevContent + data.emoji);
     inputRef.current?.focus();
     setEmojiOpen(false);
   };
@@ -194,14 +188,16 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
               </span>
             </>
           )}
-          <button
-            type='button'
-            aria-label='remove attachment'
-            className='btn btn-circle btn-xs btn-error absolute top-1 right-1'
-            onClick={() => setFile(null)}
-          >
-            <FontAwesomeIcon icon={faXmarkCircle} />
-          </button>
+          {file && (
+            <button
+              type='button'
+              aria-label='remove attachment'
+              className='btn btn-circle btn-xs btn-error absolute top-1 right-1'
+              onClick={() => setFile(null)}
+            >
+              <FontAwesomeIcon icon={faXmarkCircle} />
+            </button>
+          )}
         </div>
       )}
 
@@ -229,35 +225,38 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
           accept='image/*,video/*,audio/*,application/pdf,.doc,.docx'
           onChange={handleFile}
         />
-        <button
-          type='button'
-          aria-label='emoji'
-          className='text-2xl text-yellow-500 cursor-pointer'
-          onClick={() => setEmojiOpen((open) => !open)}
-        >
-          <FontAwesomeIcon icon={faFaceSmile} />
-        </button>
+        <div ref={emojiRef}>
+          <button
+            type='button'
+            aria-label='emoji'
+            className='text-2xl text-yellow-500 cursor-pointer'
+            onClick={() => setEmojiOpen((open) => !open)}
+          >
+            <FontAwesomeIcon icon={faFaceSmile} />
+          </button>
 
-        {emojiOpen && (
-          <div ref={emojiRef} className='absolute right-0 bottom-14'>
-            <EmojiPicker
-              theme={Theme.DARK}
-              onEmojiClick={handleEmojiClick}
-              height={320}
-              width={250}
-              searchDisabled
-              previewConfig={{ showPreview: false }}
-              skinTonesDisabled
-              style={
-                {
-                  "--epr-emoji-size": "20px",
-                  "--epr-category-label-height": "20px",
-                  "--epr-header-padding": "4px",
-                } as React.CSSProperties
-              }
-            />
-          </div>
-        )}
+          {emojiOpen && (
+            <div className='absolute right-0 bottom-14 z-50'>
+              <EmojiPicker
+                theme={Theme.DARK}
+                onEmojiClick={handleEmojiClick}
+                height={320}
+                width={250}
+                searchDisabled
+                previewConfig={{ showPreview: false }}
+                skinTonesDisabled
+                style={
+                  {
+                    "--epr-emoji-size": "20px",
+                    "--epr-category-label-height": "20px",
+                    "--epr-header-padding": "4px",
+                  } as React.CSSProperties
+                }
+              />
+            </div>
+          )}
+        </div>
+
         <button
           type='button'
           aria-label='upload'

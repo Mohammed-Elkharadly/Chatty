@@ -395,14 +395,9 @@ export const deleteMessage = async (req: Request, res: Response) => {
 
   // if there's an attachment, delete the file from Cloudinary too
   if (message.attachment) {
-    // map our type to Cloudinary's resource_type (must match what was used at upload)
     const resourceType =
       message.attachment.resourceType ??
-      (message.attachment.type === "image"
-        ? "image"
-        : message.attachment.type === "video"
-          ? "video"
-          : "raw"); // audio, pdf, document → all "raw"
+      toCloudinaryResourceType(message.attachment.type);
 
     try {
       await deleteFromCloudinary(message.attachment.publicId, resourceType);
@@ -502,11 +497,8 @@ export const updateMessage = async (req: Request, res: Response) => {
   // done AFTER save so the new file is safe before we remove the old one
   if (file && previousAttachment) {
     const resourceType =
-      previousAttachment.type === "image"
-        ? "image"
-        : previousAttachment.type === "video"
-          ? "video"
-          : "raw"; // audio, pdf, document
+      previousAttachment.resourceType ??
+      toCloudinaryResourceType(previousAttachment.type);
 
     // fire-and-forget: don't block the response on the delete
     deleteFromCloudinary(previousAttachment.publicId, resourceType).catch(
@@ -566,8 +558,8 @@ export const reactToMessage = async (req: Request, res: Response) => {
   }
 
   // find if this user already has a reaction on this message
-  const existingIndex = message.reactions?.findIndex((r) =>
-    r.userId.equals(loggedInUserId),
+  const existingIndex = message.reactions?.findIndex((reaction) =>
+    reaction.userId.equals(loggedInUserId),
   );
 
   // if they're reacting with the same emoji → toggle off

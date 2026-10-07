@@ -4,6 +4,7 @@ import {
   addMessage,
   removeMessage,
   editMessage,
+  setReactions
 } from "./messageSlice";
 import type { Message, Reaction } from "./message.types";
 
@@ -98,6 +99,14 @@ export const messageApi = apiSlice.injectEndpoints({
         method: "PATCH",
         body: { emoji },
       }),
+      async onQueryStarted({ messageId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setReactions({ messageId, reactions: data.reactions }));
+        } catch (error) {
+          console.error(error)
+        }
+      },
     }),
   }),
 });

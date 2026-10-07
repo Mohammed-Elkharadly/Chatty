@@ -31,7 +31,11 @@ const ChatPage = () => {
     <div className='flex h-screen flex-1 flex-col'>
       <ChatHeader />
       <ChatMessages onEdit={setEditingId} />
-      <ChatInput editingId={editingId} setEditingId={setEditingId} />
+      <ChatInput
+        key={editingId ?? "new"}
+        editingId={editingId}
+        setEditingId={setEditingId}
+      />
     </div>
   );
 };
