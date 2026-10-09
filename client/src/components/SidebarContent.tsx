@@ -33,6 +33,21 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
     }
   }, [dispatch, newContact]);
 
+  // Restore the last selected contact after refresh
+  useEffect(() => {
+    if (!contacts.length) return;
+
+    const savedId = localStorage.getItem("selectedContactId");
+
+    if (!savedId) return;
+
+    const contact = contacts.find((c) => c._id === savedId);
+
+    if (contact) {
+      dispatch(setSelectedContact(contact));
+    }
+  }, [contacts, dispatch]);
+
   useEffect(() => {
     const query = search.trim();
 
@@ -73,7 +88,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
 
   return (
     <>
-      <div className='flex-1 overflow-y-auto p-2'>
+      <div className='flex-1 overflow-y-auto p-2 no-scrollbar'>
         {isFetching && isOpen && (
           <span className='text-xs text-base-content/50 px-4 py-2'>
             Searching...
@@ -90,11 +105,12 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
             <button
               key={contact._id}
               type='button'
-              className={`flex items-center w-full px-2 py-1 hover:bg-blue-700 transition-colors cursor-pointer mb-2 rounded-xl
+              className={`flex items-center w-full px-2 py-1 hover:bg-blue-900 transition-colors cursor-pointer mb-2 rounded-sm bg-[#191e24] shadow-sm shadow-black ring-2'
                 ${isOpen ? "gap-3" : "justify-center"}
-                ${selectedContact?._id === contact._id ? " bg-blue-900" : ""}`}
+                ${selectedContact?._id === contact._id ? " bg-blue-950" : ""}`}
               onClick={() => {
                 dispatch(setSelectedContact(contact));
+                localStorage.setItem("selectedContactId", contact._id);
                 navigate("/");
               }}
             >
@@ -120,7 +136,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
                 </div>
                 {/** online indicator */}
                 <span
-                  className={`absolute z-50 top-0 left-0 w-2 h-2 rounded-full 
+                  className={`absolute z-50 top-0 left-0 w-3 h-3 rounded-full border-2 border-base-100
                   ${onlineUsers.includes(contact._id) ? "bg-success" : "bg-gray-400"}`}
                 ></span>
                 {isOpen && (

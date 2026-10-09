@@ -119,7 +119,7 @@ const SettingsPage = () => {
     (deleteError as ApiError | undefined)?.data?.message ||
     "something went wrong.";
   return (
-    <div className='h-screen flex items-start justify-center py-10 px-4 bg-slate-900 overflow-auto'>
+    <div className='h-screen flex items-start justify-center py-10 px-4 bg-slate-900 overflow-auto no-scrollbar'>
       <div className='flex flex-col gap-6 w-full max-w-md '>
         {/* --- Profile --- */}
         <div className='card shadow-xl  bg-blue-600/25 rounded-2xl'>
@@ -181,7 +181,7 @@ const SettingsPage = () => {
               <input
                 type='text'
                 id='name'
-                className='input input-bordered w-full'
+                className='input input-bordered w-full focus:outline-none focus:ring-0'
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -233,7 +233,7 @@ const SettingsPage = () => {
               <input
                 type='password'
                 id='current-password'
-                className='input input-bordered w-full'
+                className='input input-bordered w-full focus:outline-none focus:ring-0'
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 autoComplete='current-password'
@@ -247,7 +247,7 @@ const SettingsPage = () => {
               <input
                 type='password'
                 id='new-password'
-                className='input input-bordered w-full'
+                className='input input-bordered w-full focus:outline-none focus:ring-0'
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 autoComplete='new-password'
@@ -304,7 +304,7 @@ const SettingsPage = () => {
                   <div className='form-control mb-4'>
                     <input
                       type='password'
-                      className='input input-bordered'
+                      className='input input-bordered focus:outline-none focus:ring-0'
                       placeholder='Password'
                       value={deletePassword}
                       onChange={(e) => setDeletePassword(e.target.value)}

@@ -11,7 +11,8 @@ interface SidebarContentProps {
   search: string;
   setSearch: React.Dispatch<React.SetStateAction<string>>;
 }
-const SidebarHeader = ({ isOpen, search, setSearch }: SidebarContentProps) => {
+const SidebarHeader = ({ ...props }: SidebarContentProps) => {
+  const { isOpen, search, setSearch } = props;
   const user = useAppSelector((state) => state.auth.user);
   const { isMuted } = useAppSelector((state) => state.users);
   const dispatch = useAppDispatch();
@@ -19,8 +20,8 @@ const SidebarHeader = ({ isOpen, search, setSearch }: SidebarContentProps) => {
   const content = (
     <>
       {/** Avatar + Name */}
-      <div className='flex items-center gap-3 px-4 py-3 border-b border-gray-400'>
-        <div className='avatar placeholder relative'>
+      <div className='flex items-center justify-evenly gap-3 p-2 m-2 bg-[#191e24] shadow-sm shadow-black rounded-sm '>
+        <div className='avatar relative'>
           <div className='bg-slate-900 text-neutral-content rounded-full border border-gray-200 w-10 flex items-center justify-center'>
             {user?.avatar ? (
               <img
@@ -46,24 +47,24 @@ const SidebarHeader = ({ isOpen, search, setSearch }: SidebarContentProps) => {
         </button>
       </div>
       {/** Search input */}
-      <div className='px-3 py-2 border-b border-gray-200'>
+      <div className='relative px-3 m-2 py-2  bg-[#191e24] shadow-sm shadow-black rounded-sm '>
         <label
           htmlFor='search'
           aria-label='search input'
-          className='input input-bordered flex items-center gap-2 input-sm'
+          className='absolute top-3 right-5 z-10'
         >
           <FontAwesomeIcon icon={faMagnifyingGlass} />
-          <input
-            type='text'
-            id='search'
-            name='search'
-            placeholder='Search...'
-            className='grow'
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            autoComplete='off'
-          />
         </label>
+        <input
+          type='text'
+          id='search'
+          name='search'
+          placeholder='Search for a contact'
+          className='growo  input input-sm flex items-center gap-2 focus:outline-none focus:ring-0'
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoComplete='off'
+        />
       </div>
     </>
   );

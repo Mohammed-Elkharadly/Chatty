@@ -82,14 +82,15 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
     };
   }, [openMenuId]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({behavior: "smooth"});
-  }, [messages, selectedContact?._id])
 
   if (!selectedContact) return null;
 
   return (
-    <div className='flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-900 min-h-0'>
+    <div
+      className='flex flex-1 flex-col gap-4
+                  overflow-y-auto bg-slate-900
+                  min-h-0 no-scrollbar'
+    >
       {messages.length === 0 ? (
         <p className='mt-4 text-center text-sm text-gray-400'>
           No message yet. Say hello! 👋
@@ -113,9 +114,9 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
               {!isMe && <ReactionPicker messageId={msg._id} isMe={isMe} />}
 
               <div
-                className={`max-w-xs lg:max-w-md p-3 rounded-xl text-sm relative wrap-break-word shadow-sm ${
+                className={`max-w-xs lg:max-w-md p-2 rounded-xl text-sm relative wrap-break-word shadow-sm ${
                   isMe
-                    ? "bg-blue-600 text-white rounded-br-none pr-7"
+                    ? "bg-blue-900 text-white rounded-br-none"
                     : "bg-gray-800 text-gray-100 rounded-bl-none"
                 }`}
               >
@@ -134,11 +135,11 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
                       <FontAwesomeIcon icon={faEllipsisVertical} />
                     </button>
                     {isMenuOpen && (
-                      <div className='absolute top-6 right-0 w-28 bg-gray-800 border border-gray-700 shadow-lg rounded-md z-50 p-1 flex flex-col gap-1'>
+                      <div className='absolute -top-2 right-5 w-28 bg-gray-800 border rounded p-1.5 border-gray-700 shadow-lgrounded-md z-50  flex flex-col gap-1.5'>
                         <button
                           type='button'
                           aria-label='update message'
-                          className='flex items-center justify-between px-2 py-1.5 text-xs text-gray-200 hover:bg-gray-700 rounded cursor-pointer w-full'
+                          className='flex items-center justify-evenly gap-2 text-gray-100 hover:text-yellow-600 w-full cursor-pointer'
                           onClick={() => {
                             setOpenMenuId(null);
                             onEdit(msg._id);
@@ -157,7 +158,7 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
                 {msg.attachment && (
                   <AttachmentView attachment={msg.attachment} />
                 )}
-                {msg.content && <p>{msg.content}</p>}
+                {msg.content && <p className="pr-5">{msg.content}</p>}
 
                 {/* Footer Metadata (Timestamp & Read Status) */}
                 <div className='flex items-center justify-end gap-1 mt-1.5 text-[11px] opacity-75'>
@@ -167,7 +168,9 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
                     )}
                   </span>
                   {isEdited && (
-                    <span className='italic text-[10px]'>(edited)</span>
+                    <span className='italic text-[10px] text-yellow-400'>
+                      (edited)
+                    </span>
                   )}
 
                   {isMe && (
@@ -206,7 +209,7 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
           );
         })
       )}
-      <div ref={bottomRef}/>
+      <div ref={bottomRef} />
     </div>
   );
 };

@@ -88,7 +88,7 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
-    if (e.nativeEvent.isComposing) return;
+    if (e.nativeEvent.isComposing || isPending) return;
     if (isEditing) {
       handleUpdate();
     } else {
@@ -207,7 +207,7 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
           id='message'
           aria-label='message'
           ref={inputRef}
-          className='input-bordered input input-sm flex-1'
+          className='input-bordered input input-sm flex-1 focus:outline-none focus:ring-0'
           value={content}
           placeholder={isEditing ? "Edit message..." : "Type a message..."}
           onChange={(e) => setContent(e.target.value)}
