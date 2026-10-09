@@ -9,7 +9,7 @@ import {
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPenToSquare, faTrash } from "@fortawesome/free-solid-svg-icons";
-import type { ApiError } from "../app/middleware/rtkQueryErrorMiddlewarw";
+import type { ApiError } from "../app/middleware/rtkQueryErrorMiddleware";
 import toast from "react-hot-toast";
 
 const SettingsPage = () => {
@@ -273,7 +273,7 @@ const SettingsPage = () => {
         </div>
 
         {/* --- Delete Account --- */}
-        <div className='card shadow-xl border  bg-red-600/25 rounded-2xl border-error'>
+        <div className='card border border-error bg-red-600/25 rounded-2xl shadow-xl'>
           <div className='card-body'>
             <h2 className='card-title mb-4 text-error'>Delete Account</h2>
 

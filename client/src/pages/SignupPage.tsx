@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import type { SignupData } from "../features/auth/auth.types";
 import { useSignupUserMutation } from "../features/auth/authEndpoints";
 import GoogleAuthButton from "../components/GoogleAuthButton";
-import type { ApiError } from '../app/middleware/rtkQueryErrorMiddlewarw';
+import type { ApiError } from '../app/middleware/rtkQueryErrorMiddleware';
 
 const initialSignupForm: SignupData = {
   name: "",
@@ -59,7 +59,7 @@ const SignupPage = () => {
   return (
     <>
       <main
-        className='flex min-h-screen items-center justify-center  bg-slate-900'
+        className='flex min-h-screen items-center justify-center bg-slate-900'
       >
         <div className='card w-96  bg-blue-900/25 shadow-xl rounded-xl'>
           <div className='card-body'>

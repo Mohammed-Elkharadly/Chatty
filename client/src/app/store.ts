@@ -2,7 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { apiQuery } from "../lib/apiQuery";
 import authReducer from "../features/auth/authSlice";
 import usersReducer from "../features/users/usersSlice";
-import { rtkQueryErrorMiddleware } from "./middleware/rtkQueryErrorMiddlewarw";
+import { rtkQueryErrorMiddleware } from "./middleware/rtkQueryErrorMiddleware";
 import messageReducer from "../features/messages/messageSlice";
 
 // configureStore: Creates the one central store where all app data lives.

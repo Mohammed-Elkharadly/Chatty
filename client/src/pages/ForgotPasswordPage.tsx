@@ -24,8 +24,8 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <main className='flex min-h-screen items-center justify-center  bg-slate-900'>
-      <div className='card w-96  bg-blue-900/25 shadow-xl rounded-xl'>
+    <main className='flex min-h-screen items-center justify-center bg-slate-900'>
+      <div className='card w-96 rounded-xl bg-blue-900/25 shadow-xl'>
         <div className='card-body'>
           <h2 className='mb-4 card-title text-2xl font-bold'>
             Forgot Password

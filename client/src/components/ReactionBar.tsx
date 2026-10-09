@@ -10,7 +10,7 @@ const ReactionBar = ({ reactions }: { reactions: Reaction[] }) => {
   }, {});
 
   return (
-    <div className='flex flex-wrap gap-1 bg-gray-800/90 border border-gray-700 backdrop-blur-sm px-1.5 py-0.5 rounded-full shadow-sm text-xs select-none'>
+    <div className='flex flex-wrap select-none gap-1 rounded-full border border-gray-700 bg-gray-800/90 px-1.5 py-0.5 text-xs shadow-sm backdrop-blur-sm'>
       {Object.entries(counts).map(([emoji, count]) => (
         <span key={emoji} className='flex items-center gap-0.5 leading-none'>
           <span>{emoji}</span>

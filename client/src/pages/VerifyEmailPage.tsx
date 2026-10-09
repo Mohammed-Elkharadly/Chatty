@@ -26,7 +26,7 @@ const VerifyEmailPage = () => {
         <div className='card-body'>
           {isSuccess ? (
             <>
-              <h2 className='card-title text-2xl font-bold mb-4'>Email Verified ✅</h2>
+              <h2 className='mb-4 card-title text-2xl font-bold'>Email Verified ✅</h2>
               <p className='text-sm mb-4'>You're all set. You can log in now.</p>
               <Link to='/login' className='btn btn-primary w-full'>
                 Go to Login
@@ -34,7 +34,7 @@ const VerifyEmailPage = () => {
             </>
           ) : (
             <>
-              <h2 className='card-title text-2xl font-bold mb-4'>Verification Failed</h2>
+              <h2 className='mb-4 card-title text-2xl font-bold'>Verification Failed</h2>
               <p className='text-sm mb-4'>
                 This link is invalid or expired. Enter your email to get a new one.
               </p>

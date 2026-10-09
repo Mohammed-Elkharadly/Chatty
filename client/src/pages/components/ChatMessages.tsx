@@ -82,15 +82,10 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
     };
   }, [openMenuId]);
 
-
   if (!selectedContact) return null;
 
   return (
-    <div
-      className='flex flex-1 flex-col gap-4
-                  overflow-y-auto bg-slate-900
-                  min-h-0 no-scrollbar'
-    >
+    <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-slate-900 no-scrollbar'>
       {messages.length === 0 ? (
         <p className='mt-4 text-center text-sm text-gray-400'>
           No message yet. Say hello! 👋
@@ -106,7 +101,7 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
           return (
             <div
               key={msg._id}
-              className={`flex items-center gap-2 relative ${
+              className={`relative flex items-center gap-2 ${
                 isMe ? "justify-end" : "justify-start"
               }`}
             >
@@ -114,7 +109,7 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
               {!isMe && <ReactionPicker messageId={msg._id} isMe={isMe} />}
 
               <div
-                className={`max-w-xs lg:max-w-md p-2 rounded-xl text-sm relative wrap-break-word shadow-sm ${
+                className={`relative max-w-xs rounded-xl p-2 text-sm wrap-break-word shadow-sm lg:max-w-md ${
                   isMe
                     ? "bg-blue-900 text-white rounded-br-none"
                     : "bg-gray-800 text-gray-100 rounded-bl-none"
@@ -135,11 +130,11 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
                       <FontAwesomeIcon icon={faEllipsisVertical} />
                     </button>
                     {isMenuOpen && (
-                      <div className='absolute -top-2 right-5 w-28 bg-gray-800 border rounded p-1.5 border-gray-700 shadow-lgrounded-md z-50  flex flex-col gap-1.5'>
+                      <div className='absolute -top-2 right-5 z-50 flex w-28 flex-col gap-1.5 rounded border border-gray-700 bg-gray-800 p-1.5 shadow-md'>
                         <button
                           type='button'
                           aria-label='update message'
-                          className='flex items-center justify-evenly gap-2 text-gray-100 hover:text-yellow-600 w-full cursor-pointer'
+                          className='flex w-full cursor-pointer items-center justify-evenly gap-2 text-gray-100 hover:text-yellow-600'
                           onClick={() => {
                             setOpenMenuId(null);
                             onEdit(msg._id);
@@ -158,10 +153,10 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
                 {msg.attachment && (
                   <AttachmentView attachment={msg.attachment} />
                 )}
-                {msg.content && <p className="pr-5">{msg.content}</p>}
+                {msg.content && <p className='pr-5'>{msg.content}</p>}
 
                 {/* Footer Metadata (Timestamp & Read Status) */}
-                <div className='flex items-center justify-end gap-1 mt-1.5 text-[11px] opacity-75'>
+                <div className='mt-1.5 flex items-center justify-end gap-1 text-[11px] opacity-75'>
                   <span>
                     {formatTime.format(
                       new Date(isEdited ? msg.updatedAt : msg.createdAt),

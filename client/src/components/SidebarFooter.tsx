@@ -14,11 +14,11 @@ const SidebarFooter = ({ isOpen }: { isOpen: boolean }) => {
   };
   return (
     <>
-      <div className='border-t border-black p-3 flex flex-col gap-2'>
+      <div className='flex flex-col gap-2 border-t border-black p-3'>
         <Link
           to='/settings'
           aria-label='settings'
-          className='btn  btn-sm justify-start gap-3 w-full hover:bg-blue-900'
+          className='btn btn-sm w-full justify-start gap-3 hover:bg-blue-900'
         >
           <FontAwesomeIcon icon={faGear} size='lg' />
           {isOpen && <span>Settings</span>}
@@ -26,7 +26,7 @@ const SidebarFooter = ({ isOpen }: { isOpen: boolean }) => {
         <button
           type='button'
           aria-label='logout'
-          className='btn btn-sm justify-start gap-3 w-full text-error hover:bg-red-600/25'
+          className='btn btn-sm w-full justify-start gap-3 text-error hover:bg-red-600/25'
           onClick={handleLogout}
           disabled={isLoggingOut}
         >

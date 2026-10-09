@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type SubmitEvent } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useResetPasswordMutation } from "../features/auth/authEndpoints";
-import type { ApiError } from "../app/middleware/rtkQueryErrorMiddlewarw";
+import type { ApiError } from "../app/middleware/rtkQueryErrorMiddleware";
 import toast from "react-hot-toast";
 
 const ResetPasswordPage = () => {

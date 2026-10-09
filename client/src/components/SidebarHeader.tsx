@@ -20,7 +20,7 @@ const SidebarHeader = ({ ...props }: SidebarContentProps) => {
   const content = (
     <>
       {/** Avatar + Name */}
-      <div className='flex items-center justify-evenly gap-3 p-2 m-2 bg-[#191e24] shadow-sm shadow-black rounded-sm '>
+      <div className='m-2 flex items-center justify-evenly gap-3 rounded-sm bg-[#191e24] p-2 shadow-sm shadow-black'>
         <div className='avatar relative'>
           <div className='bg-slate-900 text-neutral-content rounded-full border border-gray-200 w-10 flex items-center justify-center'>
             {user?.avatar ? (
@@ -47,7 +47,7 @@ const SidebarHeader = ({ ...props }: SidebarContentProps) => {
         </button>
       </div>
       {/** Search input */}
-      <div className='relative px-3 m-2 py-2  bg-[#191e24] shadow-sm shadow-black rounded-sm '>
+      <div className='relative m-2 rounded-sm bg-[#191e24] px-3 py-2 shadow-sm shadow-black'>
         <label
           htmlFor='search'
           aria-label='search input'
@@ -60,7 +60,7 @@ const SidebarHeader = ({ ...props }: SidebarContentProps) => {
           id='search'
           name='search'
           placeholder='Search for a contact'
-          className='growo  input input-sm flex items-center gap-2 focus:outline-none focus:ring-0'
+          className='grow input input-sm flex items-center gap-2 focus:ring-0 focus:outline-none'
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           autoComplete='off'

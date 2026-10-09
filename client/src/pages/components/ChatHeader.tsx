@@ -34,7 +34,7 @@ const ChatHeader = () => {
 
       {/* Avatar */}
       <div className='relative avatar'>
-        <div className='flex w-10 items-center justify-center rounded-full bg-neutral text-neutral-content border border-gray-200'>
+        <div className='flex w-10 items-center justify-center rounded-full border border-gray-200 bg-neutral text-neutral-content'>
           {selectedContact.avatar ? (
             <img src={selectedContact.avatar} alt={selectedContact.name} />
           ) : (
@@ -44,7 +44,7 @@ const ChatHeader = () => {
 
         {/* Online mark */}
         <span
-          className={`absolute -top-1 -left-.5 h-3 w-3 rounded-full border-2 border-base-100 ${
+          className={`absolute -top-1 -left-0.5 h-3 w-3 rounded-full border-2 border-base-100 ${
             isOnline ? "bg-success" : "bg-gray-400"
           }`}
         />

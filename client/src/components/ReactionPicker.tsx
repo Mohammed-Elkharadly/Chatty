@@ -64,12 +64,12 @@ const ReactionPicker = ({ messageId, isMe }: Props) => {
       {open && (
         <div className={`absolute z-50 mb-2 ${isMe ? "right-0" : "left-0"}`}>
           {!showAll ? (
-            <div className='flex items-center gap-1 rounded-full bg-gray-800 border border-gray-700 p-1.5 shadow-xl'>
+            <div className='flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800 p-1.5 shadow-xl'>
               {popularEmojis.map((emoji) => (
                 <button
                   key={emoji}
                   type='button'
-                  className='text-lg hover:scale-125 transition-transform p-1'
+                  className='p-1 text-lg transition-transform hover:scale-125'
                   onClick={() => handlePick({ emoji } as EmojiClickData)}
                 >
                   {emoji}
@@ -78,7 +78,7 @@ const ReactionPicker = ({ messageId, isMe }: Props) => {
 
               <button
                 type='button'
-                className='flex h-7 w-7 items-center justify-center rounded-full bg-gray-700 text-sm font-semibold hover:bg-gray-600 text-gray-200'
+                className='flex h-7 w-7 items-center justify-center rounded-full bg-gray-700 text-sm font-semibold text-gray-200 hover:bg-gray-600'
                 onClick={() => setShowAll(true)}
                 aria-label='show all emojis'
               >
@@ -86,7 +86,7 @@ const ReactionPicker = ({ messageId, isMe }: Props) => {
               </button>
             </div>
           ) : (
-            <div className='shadow-2xl rounded-lg overflow-hidden border border-gray-700'>
+            <div className='overflow-hidden rounded-lg border border-gray-700 shadow-2xl'>
               <EmojiPicker
                 theme={Theme.DARK}
                 onEmojiClick={handlePick}

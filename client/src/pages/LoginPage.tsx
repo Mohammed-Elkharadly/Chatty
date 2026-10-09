@@ -4,7 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useLoginUserMutation } from "../features/auth/authEndpoints";
 import toast from "react-hot-toast";
 import type { LoginCredentials } from "../features/auth/auth.types";
-import type { ApiError } from "../app/middleware/rtkQueryErrorMiddlewarw";
+import type { ApiError } from "../app/middleware/rtkQueryErrorMiddleware";
 import GoogleAuthButton from "../components/GoogleAuthButton";
 
 const initialLoginForm: LoginCredentials = {
@@ -54,8 +54,8 @@ const LoginPage = () => {
 
   return (
     <>
-      <main className='flex min-h-screen items-center justify-center bg-slate-900 rounded-xl'>
-        <div className='card w-96  bg-blue-900/25 shadow-xl'>
+      <main className='flex min-h-screen items-center justify-center rounded-xl bg-slate-900'>
+        <div className='card w-96 bg-blue-900/25 shadow-xl'>
           <div className='card-body'>
             <h2 className='mb-4 card-title text-2xl font-bold'>Login</h2>
             {/** error alert */}

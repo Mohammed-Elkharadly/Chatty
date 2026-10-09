@@ -4,7 +4,7 @@ import {
   useSendOtpMutation,
   useVerifyOtpMutation,
 } from "../features/auth/authEndpoints";
-import type { ApiError } from "../app/middleware/rtkQueryErrorMiddlewarw";
+import type { ApiError } from "../app/middleware/rtkQueryErrorMiddleware";
 import toast from "react-hot-toast";
 
 export const OtpLoginPage = () => {

@@ -105,7 +105,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
             <button
               key={contact._id}
               type='button'
-              className={`flex items-center w-full px-2 py-1 hover:bg-blue-900 transition-colors cursor-pointer mb-2 rounded-sm bg-[#191e24] shadow-sm shadow-black ring-2'
+              className={`flex w-full items-center rounded-sm bg-[#191e24] px-2 py-1 mb-2 shadow-sm shadow-black ring-2 transition-colors cursor-pointer hover:bg-blue-900'
                 ${isOpen ? "gap-3" : "justify-center"}
                 ${selectedContact?._id === contact._id ? " bg-blue-950" : ""}`}
               onClick={() => {
@@ -116,11 +116,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
             >
               <div className='flex items-center gap-3 relative'>
                 <div className='avatar placeholder shrink-0'>
-                  <div
-                    className='bg-neutral text-neutral-content
-                    rounded-full w-10 flex items-center justify-center
-                    border border-gray-200'
-                  >
+                  <div className='flex w-10 items-center justify-center rounded-full border border-gray-200 bg-neutral text-neutral-content'>
                     {contact.avatar ? (
                       <img
                         src={contact.avatar}
@@ -136,7 +132,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
                 </div>
                 {/** online indicator */}
                 <span
-                  className={`absolute z-50 top-0 left-0 w-3 h-3 rounded-full border-2 border-base-100
+                  className={`absolute top-0 left-0 z-50 h-3 w-3 rounded-full border-2 border-base-100
                   ${onlineUsers.includes(contact._id) ? "bg-success" : "bg-gray-400"}`}
                 ></span>
                 {isOpen && (
@@ -144,11 +140,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
                 )}
                 {/** unread counts */}
                 {unReadCounts[contact._id] > 0 && (
-                  <span
-                    className='flex items-center justify-center
-                        absolute w-5 h-5 rounded-full bg-red-600
-                        text-white text-xs -top-2 left-6 '
-                  >
+                  <span className='absolute -top-2 left-6 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white'>
                     {unReadCounts[contact._id]}
                   </span>
                 )}
