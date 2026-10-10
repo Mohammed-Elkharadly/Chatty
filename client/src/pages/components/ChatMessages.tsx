@@ -11,6 +11,7 @@ import {
   faCheckDouble,
   faEllipsisVertical,
   faPenToSquare,
+  faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
 // import EditMessage from "./EditMessage";
 import AttachmentView from "./AttachmentView";
@@ -29,20 +30,28 @@ const formatTime = new Intl.DateTimeFormat("en-US", {
 
 const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [atBottom, setAtBottom] = useState(true);
   const lastReadRef = useRef<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const elementHeightRef = useRef<HTMLDivElement | null>(null);
 
   const dispatch = useAppDispatch();
 
   const user = useAppSelector((state) => state.auth.user);
   const messages = useAppSelector((state) => state.messages.messages);
   const onlineUsers = useAppSelector((state) => state.users.onlineUsers);
+  const unReadCounts = useAppSelector((state) => state.users.unReadCounts);
   const selectedContact = useAppSelector(
     (state) => state.users.selectedContact,
   );
 
+  const unreadCount = selectedContact
+    ? (unReadCounts[selectedContact._id] ?? 0)
+    : 0;
+
   const [markAsRead] = useMarkAsReadMutation();
+
   const { data } = useGetMessagesQuery(selectedContact?._id ?? skipToken, {
     skip: !selectedContact?._id,
   });
@@ -54,18 +63,38 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
   }, [dispatch, data]);
 
   useEffect(() => {
-    if (!selectedContact || messages?.length === 0) return;
+    const element = elementHeightRef.current;
+    if (!element) return;
+    const onScroll = () => {
+      const distance =
+        element.scrollHeight - element.scrollTop - element.clientHeight;
+
+      setAtBottom(distance <= 100);
+    };
+    element.addEventListener("scroll", onScroll);
+    onScroll();
+    return () => {
+      element.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedContact || !atBottom || messages.length === 0) return;
+
     const lastMessage = messages[messages.length - 1];
 
-    if (
-      lastMessage?.senderId === selectedContact._id &&
-      lastMessage._id !== lastReadRef.current
-    ) {
+    if (lastMessage?.senderId === selectedContact._id) {
       lastReadRef.current = lastMessage._id;
       markAsRead(selectedContact._id);
       dispatch(clearUnRead(selectedContact._id));
     }
-  }, [dispatch, messages, selectedContact, markAsRead]);
+  }, [dispatch, messages, selectedContact, markAsRead, atBottom]);
+
+  useEffect(() => {
+    if (atBottom) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [atBottom, selectedContact?._id, messages]);
 
   // Click outside handler to close the active dropdown
   useEffect(() => {
@@ -85,7 +114,10 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
   if (!selectedContact) return null;
 
   return (
-    <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-slate-900 no-scrollbar'>
+    <div
+      ref={elementHeightRef}
+      className='flex relative min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-slate-900 no-scrollbar'
+    >
       {messages.length === 0 ? (
         <p className='mt-4 text-center text-sm text-gray-400'>
           No message yet. Say hello! 👋
@@ -203,6 +235,22 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
             </div>
           );
         })
+      )}
+      {(!atBottom || unreadCount > 0) && (
+        <button
+          onClick={() => {
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+            dispatch(clearUnRead(selectedContact._id));
+          }}
+          className='fixed bottom-20 left-[50%] z-30  h-10 w-10 flex items-center justify-center p-1 rounded-full bg-blue-900 text-white  hover:bg-blue-800 cursor-pointer shadow-lg shadow-blue-600/50 '
+        >
+          {unreadCount > 0 && (
+            <span className='absolute -top-2 -right-1 flex w-5 h-5 items-center justify-center p-1 rounded-full bg-red-600 text-white text-xs'>
+              {unreadCount}
+            </span>
+          )}
+          <FontAwesomeIcon icon={faChevronDown} />
+        </button>
       )}
       <div ref={bottomRef} />
     </div>
