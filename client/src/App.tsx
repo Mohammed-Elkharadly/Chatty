@@ -21,7 +21,7 @@ function App() {
     return (
       <div className='min-h-full flex flex-col items-center justify-center gap-4'>
         <span className='loading loading-spinner loading-lg'></span>
-        <span>Cecking Authentication...</span>
+        <span>Checking Authentication...</span>
       </div>
     );
   }

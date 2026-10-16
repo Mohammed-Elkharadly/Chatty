@@ -11,6 +11,7 @@ export type ChatLayoutContext = {
 const ChatLayout = () => {
   // connect socket when autheticated
   useSocket();
+
   const [isHidden, setIsHidden] = useState(() => {
     return localStorage.getItem("sidebarHidden") === "true";
   });

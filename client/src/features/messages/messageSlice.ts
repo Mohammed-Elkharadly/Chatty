@@ -1,20 +1,32 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Message, Reaction } from "./message.types";
-
-interface MessageState {
-  messages: Message[];
-}
+import type { Message, Reaction, MessageState } from "./message.types";
 
 const initialState: MessageState = {
   messages: [],
+  hasMore: true,
 };
 
 const messageSlice = createSlice({
   name: "messages",
   initialState,
   reducers: {
-    setMessages: (state, action: PayloadAction<Message[]>) => {
-      state.messages = action.payload;
+    setMessages: (
+      state,
+      action: PayloadAction<{ messages: Message[]; hasMore: boolean }>,
+    ) => {
+      state.messages = action.payload.messages;
+      state.hasMore = action.payload.hasMore;
+    },
+    prePendMessages: (
+      state,
+      action: PayloadAction<{ messages: Message[]; hasMore: boolean }>,
+    ) => {
+      const ids = new Set(state.messages.map((message) => message._id));
+      state.messages = [
+        ...action.payload.messages.filter((message) => !ids.has(message._id)),
+        ...state.messages,
+      ];
+      state.hasMore = action.payload.hasMore;
     },
     addMessage: (state, action: PayloadAction<Message>) => {
       const exists = state.messages.some(
@@ -24,11 +36,10 @@ const messageSlice = createSlice({
         state.messages.push(action.payload);
       }
     },
-    readMessage: (state) => {
-      state.messages = state.messages.map((msg) => ({
-        ...msg,
-        status: "seen",
-      }));
+    readMessage: (state, action: PayloadAction<string>) => {
+      state.messages = state.messages.map((msg) =>
+        msg.receiverId === action.payload ? { ...msg, status: "seen" } : msg,
+      );
     },
     removeMessage: (state, action: PayloadAction<string>) => {
       const messageId = String(action.payload);
@@ -56,6 +67,14 @@ const messageSlice = createSlice({
       if (index !== -1)
         state.messages[index].reactions = action.payload.reactions;
     },
+    deliverMessage: (state, action: PayloadAction<string>) => {
+      state.messages = state.messages.map((msg) =>
+        msg.receiverId === action.payload && msg.status === "sent"
+          ? { ...msg, status: "delivered" }
+          : msg,
+      );
+    },
+    resetMessages: () => initialState,
   },
 });
 
@@ -66,5 +85,8 @@ export const {
   removeMessage,
   editMessage,
   setReactions,
+  resetMessages,
+  deliverMessage,
+  prePendMessages,
 } = messageSlice.actions;
 export default messageSlice.reducer;

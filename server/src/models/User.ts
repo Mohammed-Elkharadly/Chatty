@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { ENV } from "../config/env.js";
+import { CustomError } from "../utils/customError.js";
+import { StatusCodes } from "http-status-codes";
 
 // the type you get when Mongoose returns a user (includes .save(), .toObject(), + all custom methods)
 export type UserDocument = HydratedDocument<IUser, IUserMethods>;
@@ -18,14 +20,12 @@ export enum AuthProvider {
   LOCAL = "local", // email + password
   GOOGLE = "google", // Google OAuth
   FACEBOOK = "facebook", // Facebook OAuth (future)
-  PHONE = "phone", // phone + OTP (future)
 }
 
 // the shape of a user document in MongoDB
 export interface IUser {
   name: string;
-  email?: string | undefined; // optional (phone-only users won't have one)
-  phone?: string | undefined; // optional (email-only users won't have one)
+  email?: string | undefined; 
   password?: string | undefined; // hashed; undefined for OAuth-only users
   avatar?: string | undefined; // Cloudinary URL
   avatarPublicId?: string | undefined; // Cloudinary ID (needed for deletion)
@@ -89,8 +89,6 @@ interface IUserMethods {
 interface IUserModel extends Model<IUser, {}, IUserMethods> {
   // find a user by their email (case-insensitive, active only)
   findByEmail(email: string): Promise<UserDocument | null>;
-  // find a user by their phone number
-  findByPhone(phone: string): Promise<UserDocument | null>;
   // find a user by their OAuth provider + provider-specific ID
   findByProvider(
     provider: AuthProvider,
@@ -122,11 +120,6 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
     email: {
       type: String,
       lowercase: true,
-      trim: true,
-    },
-    // optional (email-only users won't have one)
-    phone: {
-      type: String,
       trim: true,
     },
     // hashed with bcrypt before saving; select: false means it's excluded from queries by default
@@ -245,7 +238,6 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
 // --- INDEXES ---
 
 // unique email, but ONLY for docs that actually have an email AND aren't soft-deleted
-// (phone-only users skip this index; deleted users free up their email for reuse)
 userSchema.index(
   { email: 1 },
   {
@@ -253,18 +245,6 @@ userSchema.index(
     partialFilterExpression: {
       email: { $type: "string" }, // only index docs where email exists
       deletedAt: { $exists: false }, // skip soft-deleted docs
-    },
-  },
-);
-
-// same logic for phone — unique only among active, phone-having users
-userSchema.index(
-  { phone: 1 },
-  {
-    unique: true,
-    partialFilterExpression: {
-      phone: { $type: "string" },
-      deletedAt: { $exists: false },
     },
   },
 );
@@ -336,7 +316,7 @@ userSchema.methods.createJwt = function (this: UserDocument): string {
 
   // sign the token: payload = { userId }, expires after N days
   return jwt.sign({ userId: this._id.toString() }, secret, {
-    expiresIn: `${Number(ENV.JWT_EXPIRES_IN)}d`,
+    expiresIn: `${Number(ENV.JWT_EXPIRES_IN)}m`,
   });
 };
 
@@ -462,7 +442,7 @@ userSchema.methods.changePassword = async function (
   // check if the old password matches the stored hash
   const isMatch = await this.comparePassword(password);
   if (!isMatch) {
-    throw new Error("Current password incorrect");
+    throw new CustomError("Current password incorrect", StatusCodes.UNAUTHORIZED);
   }
   // assign the new plain password — the pre-save hook will hash it automatically
   this.password = newPassword;
@@ -496,14 +476,6 @@ userSchema.statics.findByEmail = async function (
   email: string,
 ): Promise<UserDocument | null> {
   return await this.findOne({ email, isActive: true });
-};
-
-// finds an active user by phone number
-userSchema.statics.findByPhone = async function (
-  this: IUserModel,
-  phone: string,
-): Promise<UserDocument | null> {
-  return await this.findOne({ phone, isActive: true });
 };
 
 // finds an active user by their OAuth provider + provider-specific ID

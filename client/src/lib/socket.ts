@@ -1,8 +1,41 @@
-import { io } from 'socket.io-client'
+import { io } from "socket.io-client";
+const apiUrl = import.meta.env.VITE_API_URL
+// Creates a Socket.IO client without connecting immediately.
+const socket = io(apiUrl, {
+  autoConnect: false, // Connect manually after login.
+  withCredentials: true, // Allow cookies to be sent.
+});
 
-const socket = io('http://localhost:5000', {
-  autoConnect: false, // Don't connect immediately "after login"
-  withCredentials: true, // Send cookies for CORS auth
+// Prevents repeated refresh attempts during connection errors.
+let retried = false;
+
+// A successful connection allows future refresh attempts.
+socket.on("connect", () => {
+  retried = false;
+});
+
+// Runs when Socket.IO cannot establish a connection.
+socket.on("connect_error", async (err) => {
+  // Refresh only for unauthorized errors, and only once per attempt.
+  if (err.message !== "Unauthorized" || retried) return;
+
+  retried = true;
+
+  try {
+    // Ask the backend to refresh the access-token cookie.
+    const response = await fetch(
+      `${apiUrl}/api/auth/refresh-token`,
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    );
+
+    // If refresh succeeded, reconnect using the new cookie.
+    if (response.ok) socket.connect();
+  } catch (error) {
+    console.error("Socket token refresh failed", error);
+  }
 });
 
 export default socket;

@@ -23,3 +23,8 @@ export interface Message {
   createdAt: string | Date;
   updatedAt: string | Date;
 }
+
+export interface MessageState {
+  messages: Message[];
+  hasMore: boolean;
+}

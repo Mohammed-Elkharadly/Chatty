@@ -122,5 +122,7 @@ const messageSchema = new Schema<IMessage>(
 // compound index: speeds up "get all messages between A and B, newest first"
 messageSchema.index({ senderId: 1, receiverId: 1, createdAt: -1 });
 
+messageSchema.index({ content: "text" });
+
 // registers the model
 export const Message = model<IMessage>("Message", messageSchema);

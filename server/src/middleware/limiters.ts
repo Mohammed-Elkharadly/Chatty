@@ -75,3 +75,13 @@ export const heavyLimiter = rateLimit({
   legacyHeaders: false,
   store: createRedisStore("rl:heavy:"),
 });
+
+// chat sending: 60 per IP per minute
+export const messageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 60,
+  message: { success: false, message: "You're sending messages too fast" },
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: createRedisStore("rl:message:"),
+});

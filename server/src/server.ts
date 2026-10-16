@@ -17,6 +17,8 @@ import cron from "node-cron";
 import helmet from "helmet";
 import morgan from "morgan";
 import { User } from "./models/User.js";
+import redisClient from "./config/redis.js";
+import {  ONLINE_USER_IDS_KEY } from "./config/socket.js"
 
 // Resolve current file path (ESM has no __dirname)
 const __filename = fileURLToPath(import.meta.url);
@@ -56,8 +58,21 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
-        connectSrc: ["'self'", ENV.CLIENT_URL, ENV.SERVER_URL],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "https://res.cloudinary.com",
+          "https://cdn.jsdelivr.net",
+        ],
+        mediaSrc: ["'self'", "https://res.cloudinary.com"],
+        scriptSrc: ["'self'", "https://accounts.google.com"],
+        frameSrc: ["https://accounts.google.com"],
+        connectSrc: [
+          "'self'",
+          ENV.CLIENT_URL,
+          ENV.SERVER_URL,
+          "https://accounts.google.com",
+        ],
       },
     },
   }),
@@ -107,6 +122,10 @@ const startServer = async (): Promise<void> => {
         console.error("cleanupExpiredToken failed", error);
       }
     });
+    // after a crash, old "online" users would otherwise stay for 24h
+    const keys = await redisClient.keys("presence:*");
+    if (keys.length) await redisClient.del(...keys);
+    await redisClient.del(ONLINE_USER_IDS_KEY);
 
     httpServer.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);

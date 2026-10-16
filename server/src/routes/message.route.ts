@@ -2,30 +2,30 @@ import express from "express";
 import { verifyJwt } from "../middleware/verifyJwt.js";
 import { upload } from "../middleware/upload.js";
 import asyncHandler from "express-async-handler";
-import { strictLimiter } from "../middleware/limiters.js";
+import { messageLimiter } from "../middleware/limiters.js";
 import {
-  searchUsers,
-  getAllChats,
+  searchForUsers,
+  getChatsHistory,
   getMessageByUserId,
   sendMessage,
   markAsRead,
   updateMessage,
   deleteMessage,
   reactToMessage,
-  searchMessages
+  searchInMessages
 } from "../controllers/messageController.js";
 const router = express.Router();
 
 router.use(verifyJwt);
 
-router.get("/search", asyncHandler(searchUsers));
-router.get("/chats", asyncHandler(getAllChats));
-router.get("/search/:id", asyncHandler(searchMessages));
+router.get("/search", asyncHandler(searchForUsers));
+router.get("/chats", asyncHandler(getChatsHistory));
+router.get("/search/:id", asyncHandler(searchInMessages));
 router.get("/:id", asyncHandler(getMessageByUserId));
 
 // upload.single('attachment') parses multipart/form-data, populates
 // req.file (the attachment) and req.body (any other text fields, e.g. content)
-router.post("/send/:id", strictLimiter, upload.single('attachment'), asyncHandler(sendMessage));
+router.post("/send/:id", messageLimiter, upload.single('attachment'), asyncHandler(sendMessage));
 router.patch("/read/:id", asyncHandler(markAsRead));
 router.patch("/:id", upload.single('attachment'), asyncHandler(updateMessage));
 router.delete("/:id", asyncHandler(deleteMessage));

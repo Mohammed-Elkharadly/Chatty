@@ -44,6 +44,14 @@ const usersSlice = createSlice({
     clearUnRead: (state, action: PayloadAction<string>) => {
       state.unReadCounts[action.payload] = 0;
     },
+    seedUnread: (state, action: PayloadAction<Contact[]>) => {
+      action.payload.forEach((contact) => {
+        if (state.unReadCounts[contact._id] === undefined) {
+          state.unReadCounts[contact._id] = contact.unreadCount ?? 0;
+        }
+      });
+    },
+    resetUsers: () => initialState,
   },
 });
 
@@ -54,5 +62,7 @@ export const {
   setIsMuted,
   unReadMessage,
   clearUnRead,
+  resetUsers,
+  seedUnread,
 } = usersSlice.actions;
 export default usersSlice.reducer;

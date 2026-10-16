@@ -1,4 +1,7 @@
 import { apiQuery } from "../../lib/apiQuery";
+import { resetUsers } from "./usersSlice";
+import { resetMessages } from "../messages/messageSlice";
+import type { AppDispatch } from "../../app/store";
 import { login, logout } from "../auth/authSlice";
 import type { Contact } from "./users.types";
 import type {
@@ -7,15 +10,24 @@ import type {
   UpdateProfileResponse,
 } from "./users.types";
 
+const clearSession = (dispatch: AppDispatch) => {
+  dispatch(logout());
+  dispatch(resetUsers());
+  dispatch(resetMessages());
+  dispatch(apiQuery.util.resetApiState());
+  localStorage.removeItem("selectedContactId");
+  localStorage.removeItem("sidebarHidden");
+};
+
 export const usersApi = apiQuery.injectEndpoints({
   endpoints: (builder) => ({
     getChatHistory: builder.query<Contact[], void>({
       query: () => "/messages/chats",
-      transformResponse: (Response: {chats: Contact[] }) => Response.chats,
+      transformResponse: (Response: { chats: Contact[] }) => Response.chats,
       providesTags: ["Contacts"],
     }),
     searchUsers: builder.query<{ contacts: Contact[] }, string>({
-      query: (searchTerm) => `/messages/search?query=${searchTerm}`,
+      query: (searchTerm) => `/messages/search?query=${encodeURIComponent(searchTerm)}`,
     }),
     // logoutUser: Ends the session on the server and clears everything locally.
     logoutUser: builder.mutation<{ message: string }, void>({
@@ -27,8 +39,7 @@ export const usersApi = apiQuery.injectEndpoints({
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled; // wait for the server to confirm logout
-          dispatch(logout()); // wipe local auth state
-          dispatch(apiQuery.util.resetApiState()); // clear all cached messages/data
+          clearSession(dispatch);
         } catch (error) {
           console.error("logout failed", error);
         }
@@ -45,7 +56,6 @@ export const usersApi = apiQuery.injectEndpoints({
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          // Reuse login() because it already knows how to store a user object.
           dispatch(login({ user: data.data.user }));
         } catch (error) {
           console.error("Profile update failed:", error);
@@ -61,7 +71,7 @@ export const usersApi = apiQuery.injectEndpoints({
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
-          dispatch(logout()); // force re-login client-side too
+          clearSession(dispatch);
         } catch (error) {
           console.error("Failed to change the password", error);
         }
@@ -77,8 +87,7 @@ export const usersApi = apiQuery.injectEndpoints({
         async onQueryStarted(_args, { dispatch, queryFulfilled }) {
           try {
             await queryFulfilled;
-            dispatch(logout());
-            dispatch(apiQuery.util.resetApiState());
+            clearSession(dispatch);
           } catch (error) {
             console.error("delete account failed", error);
           }

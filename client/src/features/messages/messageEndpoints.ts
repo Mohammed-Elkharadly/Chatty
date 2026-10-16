@@ -4,7 +4,8 @@ import {
   addMessage,
   removeMessage,
   editMessage,
-  setReactions
+  setReactions,
+  prePendMessages,
 } from "./messageSlice";
 import type { Message, Reaction } from "./message.types";
 
@@ -25,12 +26,25 @@ export const normalizeMessage = (msg: RawMessage): Message => ({
 export const messageApi = apiQuery.injectEndpoints({
   endpoints: (builder) => ({
     // query<returned response from the server, userId from query params">
-    getMessages: builder.query<{ messages: Message[] }, string>({
-      query: (userId) => `/messages/${userId}`,
-      async onQueryStarted(_args, { dispatch, queryFulfilled }) {
+    getMessages: builder.query<
+      { messages: Message[]; hasMore: boolean },
+      { userId: string; oldestMessagesId?: string }
+    >({
+      query: ({ userId, oldestMessagesId }) => ({
+        url: `/messages/${userId}`,
+        params: oldestMessagesId ? { oldestMessagesId } : undefined,
+      }),
+      async onQueryStarted({ oldestMessagesId }, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          dispatch(setMessages(data.messages.map(normalizeMessage)));
+          const payload = {
+            messages: data.messages.map(normalizeMessage),
+            hasMore: data.hasMore,
+          };
+          // older page goes on top, first page replaces the chat
+          dispatch(
+            oldestMessagesId ? prePendMessages(payload) : setMessages(payload),
+          );
         } catch (error) {
           console.error("Faild to fetch messages", error);
         }
@@ -104,7 +118,7 @@ export const messageApi = apiQuery.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(setReactions({ messageId, reactions: data.reactions }));
         } catch (error) {
-          console.error(error)
+          console.error(error);
         }
       },
     }),
@@ -113,6 +127,7 @@ export const messageApi = apiQuery.injectEndpoints({
 
 export const {
   useGetMessagesQuery,
+  useLazyGetMessagesQuery,
   useSendMessageMutation,
   useMarkAsReadMutation,
   useDeleteMessageMutation,

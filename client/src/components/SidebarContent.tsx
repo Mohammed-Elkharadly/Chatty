@@ -5,7 +5,7 @@ import { useLazySearchUsersQuery } from "../features/users/usersEndpoints";
 import { setSelectedContact } from "../features/users/usersSlice";
 import type { Contact } from "../features/users/users.types";
 import { useGetChatHistoryQuery } from "../features/users/usersEndpoints";
-import { setContacts } from "../features/users/usersSlice";
+import { setContacts, seedUnread } from "../features/users/usersSlice";
 interface SidebarContentProps {
   isOpen: boolean;
   search: string;
@@ -30,6 +30,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
   useEffect(() => {
     if (newContact) {
       dispatch(setContacts(newContact));
+      dispatch(seedUnread(newContact)); // restores badges after refresh
     }
   }, [dispatch, newContact]);
 
@@ -60,6 +61,9 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
     return () => clearTimeout(delayDebounceFn);
   }, [search, triggerSearch, setSearch]);
 
+  const lastTime = (contact: Contact) =>
+    contact.lastMessageAt ? new Date(contact.lastMessageAt).getTime() : 0;
+
   const displayContacts: Contact[] = useMemo(() => {
     const query = search.trim().toLowerCase();
 
@@ -67,24 +71,14 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
       return searchData?.contacts ?? [];
     }
 
-    return contacts.filter(
-      (c) =>
-        c.name.toLowerCase().includes(query) ||
-        c.email.toLowerCase().includes(query),
-    );
+    return contacts
+      .filter(
+        (c) =>
+          c.name.toLowerCase().includes(query) ||
+          c.email.toLowerCase().includes(query),
+      )
+      .sort((a, b) => lastTime(b) - lastTime(a)); // newest chat first
   }, [search, searchData, contacts]);
-
-  const sortedContacts = useMemo(() => {
-    if (!selectedContact) return displayContacts;
-    const selected = displayContacts.find(
-      (contact) => contact._id === selectedContact._id,
-    );
-    if (!selected) return displayContacts;
-    return [
-      selected,
-      ...displayContacts.filter((c) => c._id !== selectedContact._id),
-    ];
-  }, [displayContacts, selectedContact]);
 
   return (
     <>
@@ -101,7 +95,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
             </span>
           ) : null
         ) : (
-          sortedContacts.map((contact: Contact) => (
+          displayContacts.map((contact: Contact) => (
             <button
               key={contact._id}
               type='button'

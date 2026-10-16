@@ -31,7 +31,6 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [emojiOpen, setEmojiOpen] = useState(false);
 
-
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [updateMessage, { isLoading: isUpdating }] = useUpdateMessageMutation();
 
@@ -41,7 +40,7 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const emojiRef = useRef<HTMLInputElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
   const isEditing = editingMessage !== null;
   const isPending = isSending || isUpdating;
 

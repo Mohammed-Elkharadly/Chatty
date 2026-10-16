@@ -12,6 +12,7 @@ import {
   removeMessage,
   editMessage,
   setReactions,
+  deliverMessage,
 } from "../features/messages/messageSlice";
 import socket from "../lib/socket";
 import type { Message } from "../features/messages/message.types";
@@ -25,13 +26,19 @@ const useSocket = () => {
 
   const isSetup = useRef(false);
 
+  const selectedContactId = useAppSelector(
+    (state) => state.users.selectedContact?._id,
+  );
+  const selectedIdRef = useRef(selectedContactId);
+
   const isMutedRef = useRef(isMuted);
   const userIdRef = useRef(userId);
 
   useEffect(() => {
     isMutedRef.current = isMuted;
     userIdRef.current = userId;
-  }, [isMuted, userId]);
+    selectedIdRef.current = selectedContactId;
+  }, [isMuted, userId, selectedContactId]);
 
   useEffect(() => {
     if (!isAuthenticated || !userId) {
@@ -42,12 +49,13 @@ const useSocket = () => {
         socket.off("message:delete");
         socket.off("message:update");
         socket.off("message:reaction");
+        socket.off("messages:delivered");
         if (socket.connected) socket.disconnect();
         isSetup.current = false;
       }
       return;
     }
-    
+
     if (!socket.connected) {
       socket.connect();
     }
@@ -63,10 +71,21 @@ const useSocket = () => {
 
       socket.on("message:new", (message: RawMessage) => {
         const normalizedMessage = normalizeMessage(message);
-        dispatch(addMessage(normalizedMessage));
+
+        // the other person in this message (not me)
+        const otherId =
+          normalizedMessage.senderId === userIdRef.current
+            ? normalizedMessage.receiverId
+            : normalizedMessage.senderId;
+
+        // only show the message if its chat is open
+        if (otherId === selectedIdRef.current) {
+          dispatch(addMessage(normalizedMessage));
+        }
+
+        dispatch(usersApi.util.invalidateTags(["Contacts"])); // always refresh order
 
         if (normalizedMessage.senderId !== userIdRef.current) {
-          dispatch(usersApi.util.invalidateTags(["Contacts"]));
           dispatch(unReadMessage(normalizedMessage.senderId));
         }
         if (
@@ -83,8 +102,8 @@ const useSocket = () => {
         }
       });
 
-      socket.on("messages:read", () => {
-        dispatch(readMessage());
+      socket.on("messages:read", ({ by }: { by: string }) => {
+        dispatch(readMessage(by));
       });
 
       socket.on("message:update", (data: Message) => {
@@ -96,8 +115,11 @@ const useSocket = () => {
       });
 
       socket.on("message:reaction", ({ messageId, reactions }) => {
-        console.log("REACTION SOCKET:", messageId, reactions);
-        dispatch(setReactions({messageId, reactions}));
+        dispatch(setReactions({ messageId, reactions }));
+      });
+
+      socket.on("messages:delivered", ({ by }: { by: string }) => {
+        dispatch(deliverMessage(by));
       });
 
       isSetup.current = true;
@@ -117,8 +139,10 @@ const useSocket = () => {
         socket.off("message:delete");
         socket.off("message:update");
         socket.off("message:reaction");
+        socket.off("messages:delivered");
         isSetup.current = false;
       }
+      if (socket.connected) socket.disconnect();
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";

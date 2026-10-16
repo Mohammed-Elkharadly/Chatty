@@ -5,9 +5,8 @@ import type { UserDocument } from '../models/User.js';
 export class Validator {
   private static readonly emailRegEx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
   private static readonly passRegEx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/; 
-  private static readonly phoneRegEx = /^\+?[0-9]\d{7,14}$/
   // signup check
-  static validateSignup(name: string, email: string, password: string, phone: string) {
+  static validateSignup(name: string, email: string, password: string) {
     // check if all credentials is provided
     if (!name || !email || !password) {
       throw new CustomError('first 3 fields are required', StatusCodes.BAD_REQUEST);
@@ -22,14 +21,6 @@ export class Validator {
     if (!this.passRegEx.test(password)) {
       throw new CustomError(
         'Must contain uppercase, lowercase, number, and special character.',
-        StatusCodes.BAD_REQUEST,
-      );
-    }
-    
-    // check if the password is valid
-    if (!this.phoneRegEx.test(phone)) {
-      throw new CustomError(
-        'invalid phone number format',
         StatusCodes.BAD_REQUEST,
       );
     }

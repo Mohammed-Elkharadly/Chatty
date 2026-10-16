@@ -25,10 +25,10 @@ const passRegEx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
 // handles: POST /api/auth/signup
 export const signup = async (req: Request, res: Response) => {
   // pull the fields the client sent
-  const { name, email, password, phone } = req.body;
+  const { name, email, password } = req.body;
 
   // run validation (format checks, password strength, etc.) — throws if invalid
-  Validator.validateSignup(name, email, password, phone);
+  Validator.validateSignup(name, email, password);
 
   // if email was provided, make sure no other user already has it
   if (email) {
@@ -38,19 +38,8 @@ export const signup = async (req: Request, res: Response) => {
     }
   }
 
-  // if phone was provided, make sure no other user already has it
-  if (phone) {
-    const duplicatePhone = await User.findByPhone(phone);
-    if (duplicatePhone) {
-      throw new CustomError(
-        "choose a valid phone number",
-        StatusCodes.BAD_REQUEST,
-      );
-    }
-  }
-
   // create + save the user in MongoDB (password gets hashed by the model's pre-save hook)
-  const user = await User.create({ name, email, password, phone });
+  const user = await User.create({ name, email, password });
 
   // generate a one-time token the user will use to verify their email
   const verificationToken = await user.generateVerificationToken();
@@ -462,6 +451,11 @@ export const verifyOtp = async (req: Request, res: Response) => {
     );
   }
 
+  // non-string values would make crypto.update() throw a 500
+  if (typeof email !== "string" || typeof otp !== "string") {
+    throw new CustomError("invalid input", StatusCodes.BAD_REQUEST);
+  }
+
   // find the active user by email; include the otp + otpExpire fields (normally excluded from queries)
   const user = await User.findOne({ email, isActive: true }).select(
     "+otp +otpExpire",
@@ -550,6 +544,12 @@ export const oAuthLogin = async (req: Request, res: Response) => {
   // second: if no linked user, check if an email-based account already exists with the same email
   // if so, link the provider to that existing account (merge, don't create a duplicate)
   if (!user && verifiedProfile.email) {
+    if (!verifiedProfile.email_verified) {
+      throw new CustomError(
+        "google email not verified",
+        StatusCodes.UNAUTHORIZED,
+      );
+    }
     const existingUser = await User.findByEmail(verifiedProfile.email);
     if (existingUser) {
       // attach the provider info to the existing account

@@ -6,6 +6,8 @@ export interface Contact {
   avatar: string;
   createdAt: string;
   updatedAt: string;
+  lastMessageAt?: string; 
+  unreadCount?: number;
 }
 
 

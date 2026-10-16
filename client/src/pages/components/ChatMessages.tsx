@@ -1,10 +1,20 @@
-import { useRef, useState, useEffect } from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import { useAppSelector, useAppDispatch } from "../../app/hooks";
 import DeleteMessage from "./DeleteMessage";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { skipToken } from "@reduxjs/toolkit/query";
-import { useGetMessagesQuery } from "../../features/messages/messageEndpoints";
+import {
+  useGetMessagesQuery,
+  useLazyGetMessagesQuery,
+} from "../../features/messages/messageEndpoints";
 import { clearUnRead } from "../../features/users/usersSlice";
+import { resetMessages } from "../../features/messages/messageSlice";
 import { useMarkAsReadMutation } from "../../features/messages/messageEndpoints";
 import {
   faCheck,
@@ -15,7 +25,6 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 // import EditMessage from "./EditMessage";
 import AttachmentView from "./AttachmentView";
-import { setMessages } from "../../features/messages/messageSlice";
 import ReactionPicker from "../../components/ReactionPicker";
 import ReactionBar from "../../components/ReactionBar";
 
@@ -35,12 +44,15 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const elementHeightRef = useRef<HTMLDivElement | null>(null);
+  const prevHeightRef = useRef<number | null>(null);
+  // last scrollTop, used to tell scroll direction
+  const lastScrollTopRef = useRef(0);
 
   const dispatch = useAppDispatch();
 
+  const hasMore = useAppSelector((state) => state.messages.hasMore);
   const user = useAppSelector((state) => state.auth.user);
   const messages = useAppSelector((state) => state.messages.messages);
-  const onlineUsers = useAppSelector((state) => state.users.onlineUsers);
   const unReadCounts = useAppSelector((state) => state.users.unReadCounts);
   const selectedContact = useAppSelector(
     (state) => state.users.selectedContact,
@@ -52,15 +64,45 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
 
   const [markAsRead] = useMarkAsReadMutation();
 
-  const { data } = useGetMessagesQuery(selectedContact?._id ?? skipToken, {
-    skip: !selectedContact?._id,
-  });
+  const [loadOlder, { isFetching: isLoadingOlder }] = useLazyGetMessagesQuery();
 
-  useEffect(() => {
-    if (data?.messages) {
-      dispatch(setMessages(data.messages));
+  // first page (arg is now an object)
+  useGetMessagesQuery(
+    selectedContact ? { userId: selectedContact._id } : skipToken,
+    { refetchOnMountOrArgChange: true },
+  );
+
+  const loadOlderMessages = useCallback(() => {
+    const element = elementHeightRef.current;
+    if (
+      !element ||
+      !selectedContact ||
+      !hasMore ||
+      isLoadingOlder ||
+      !messages.length
+    )
+      return;
+
+    prevHeightRef.current = element?.scrollHeight;
+
+    loadOlder({
+      userId: selectedContact._id,
+      oldestMessagesId: messages[0]._id,
+    })
+      .unwrap()
+      .catch(() => {
+        prevHeightRef.current = null; // failed, nothing to restore
+      });
+  }, [selectedContact, hasMore, isLoadingOlder, messages, loadOlder]);
+
+  // after older messages are added, move scroll down by the added height
+  useLayoutEffect(() => {
+    const element = elementHeightRef.current;
+    if (element && prevHeightRef.current !== null) {
+      element.scrollTop += element.scrollHeight - prevHeightRef.current;
+      prevHeightRef.current = null;
     }
-  }, [dispatch, data]);
+  }, [messages]);
 
   useEffect(() => {
     const element = elementHeightRef.current;
@@ -78,23 +120,30 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
     };
   }, []);
 
+  // new chat opened → forget the last read message
+  useEffect(() => {
+    lastReadRef.current = null;
+  }, [selectedContact?._id]);
+
   useEffect(() => {
     if (!selectedContact || !atBottom || messages.length === 0) return;
-
     const lastMessage = messages[messages.length - 1];
-
-    if (lastMessage?.senderId === selectedContact._id) {
-      lastReadRef.current = lastMessage._id;
-      markAsRead(selectedContact._id);
-      dispatch(clearUnRead(selectedContact._id));
-    }
+    // skip if it's not from the contact or was already marked as read
+    if (
+      lastMessage?.senderId !== selectedContact._id ||
+      lastReadRef.current === lastMessage._id
+    )
+      return;
+    lastReadRef.current = lastMessage._id;
+    markAsRead(selectedContact._id);
+    dispatch(clearUnRead(selectedContact._id));
   }, [dispatch, messages, selectedContact, markAsRead, atBottom]);
 
   useEffect(() => {
     if (atBottom) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [atBottom, selectedContact?._id, messages]);
+  }, [atBottom, messages]);
 
   // Click outside handler to close the active dropdown
   useEffect(() => {
@@ -111,13 +160,26 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
     };
   }, [openMenuId]);
 
+  useEffect(() => {
+    dispatch(resetMessages());
+  }, [dispatch, selectedContact?._id]);
+
   if (!selectedContact) return null;
 
   return (
     <div
       ref={elementHeightRef}
+      onScroll={(e) => {
+        const top = e.currentTarget.scrollTop;
+        const scrollingUp = top < lastScrollTopRef.current; // true only when moving up
+        lastScrollTopRef.current = top;
+        if (scrollingUp && top < 80) loadOlderMessages();
+      }}
       className='flex relative min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-slate-900 no-scrollbar'
     >
+      {isLoadingOlder && (
+        <span className='loading loading-spinner loading-sm mx-auto' />
+      )}
       {messages.length === 0 ? (
         <p className='mt-4 text-center text-sm text-gray-400'>
           No message yet. Say hello! 👋
@@ -206,8 +268,7 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
                         <span className='text-green-400'>
                           <FontAwesomeIcon icon={faCheckDouble} />
                         </span>
-                      ) : msg.status === "delivered" ||
-                        onlineUsers.includes(selectedContact._id) ? (
+                      ) : msg.status === "delivered" ? (
                         <span className='text-gray-300'>
                           <FontAwesomeIcon icon={faCheckDouble} />
                         </span>

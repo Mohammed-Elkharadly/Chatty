@@ -7,6 +7,7 @@ import { ENV } from "./env.js";
 import { GroupMember } from "../models/GroupMember.js";
 import redisClient from "./redis.js";
 import type { Redis } from "ioredis";
+import { Message } from "../models/Message.js";
 
 const parseCookieHeader = (header: string): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -23,7 +24,7 @@ const ALLOWED_ORIGINS = [ENV.CLIENT_URL, ENV.SERVER_URL];
 const PRESENCE_TTL_SEC = 60 * 60 * 24; // presence key lifetime, refreshed while connected
 
 const presenceKey = (userId: string) => `presence:${userId}`;
-const ONLINE_USER_IDS_KEY = "online_user_ids";
+export const ONLINE_USER_IDS_KEY = "online_user_ids";
 
 export const getSocketsForUser = async (userId: string): Promise<string[]> =>
   redisClient.smembers(presenceKey(userId));
@@ -94,6 +95,23 @@ export const initSocketServer = (
     }
   });
 
+  // marks messages received while offline as delivered, then notifies each sender
+  const markDeliveredOnConnect = async (userId: string) => {
+    const pending = { receiverId: userId, status: "sent" };
+    // who sent me messages while I was offline
+    const senderIds = await Message.distinct("senderId", pending);
+    if (!senderIds.length) return;
+
+    await Message.updateMany(pending, { $set: { status: "delivered" } });
+
+    for (const senderId of senderIds) {
+      const sockets = await getSocketsForUser(senderId.toString());
+      sockets.forEach((id) =>
+        localIo.to(id).emit("messages:delivered", { by: userId }),
+      );
+    }
+  };
+
   localIo.on("connection", (socket) => {
     const userId = socket.data.userId as string;
 
@@ -102,6 +120,10 @@ export const initSocketServer = (
         localIo.emit("users:online", onlineUserIds);
       })
       .catch((error) => console.error("addPresence failed:", error));
+
+    markDeliveredOnConnect(userId).catch((error) =>
+      console.error("markDeliveredOnConnect failed", error),
+    );
 
     socket.on("group:join", async (groupId: string) => {
       try {

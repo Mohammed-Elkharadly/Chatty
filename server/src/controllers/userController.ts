@@ -47,15 +47,15 @@ export const checkAuth = async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json({ data: { user: safeUserData(user) } });
 };
 
-// handles: PATCH /api/user/profile — updates name, phone, and/or avatar
+// handles: PATCH /api/user/profile — updates name, and/or avatar
 export const updateProfile = async (req: Request, res: Response) => {
   // pull the fields the client sent (at least one must be present)
-  const { name, phone } = req.body;
+  const { name } = req.body;
   // the uploaded avatar file (from upload.single("avatar") middleware)
   const file = req.file;
 
   // if nothing was sent → reject
-  if (!file && !name && !phone) {
+  if (!file && !name) {
     throw new CustomError(
       "at least one field required",
       StatusCodes.BAD_REQUEST,
@@ -74,7 +74,6 @@ export const updateProfile = async (req: Request, res: Response) => {
     avatar?: string;
     avatarPublicId?: string;
     name?: string;
-    phone?: string;
   } = {};
 
   // stores the old avatar's Cloudinary ID so we can delete it after the new one uploads
@@ -123,34 +122,6 @@ export const updateProfile = async (req: Request, res: Response) => {
       );
     }
     updatedData.name = name.trim();
-  }
-
-  // --- PHONE ---
-  if (phone !== undefined) {
-    // must be a string with at least 10 digits
-    if (typeof phone !== "string" || phone.trim().length < 10) {
-      throw new CustomError(
-        "phone must be at least 10 numbers",
-        StatusCodes.BAD_REQUEST,
-      );
-    }
-
-    const normalizedPhone = phone.trim();
-
-    // make sure no OTHER user already has this phone number
-    const existingUser = await User.findOne({
-      phone: normalizedPhone,
-      _id: { $ne: userId }, // exclude self (updating to your own number is fine)
-    });
-
-    if (existingUser) {
-      throw new CustomError(
-        "this phone already exist",
-        StatusCodes.BAD_REQUEST,
-      );
-    }
-
-    updatedData.phone = normalizedPhone;
   }
 
   // write the changes to the DB

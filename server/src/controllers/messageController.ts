@@ -15,8 +15,8 @@ import { getAttachmentType } from "../middleware/upload.js";
 import { Block } from "../models/Block.js";
 import { messaging } from "../config/firebase.js";
 
-// searches for users by name, email, or phone (excludes self, max 10 results)
-export const searchUsers = async (req: Request, res: Response) => {
+// searches for users by name, email (excludes self, max 10 results)
+export const searchForUsers = async (req: Request, res: Response) => {
   // my _id (set by auth middleware)
   const loggedInUserId = req.user?._id;
   // the search term the client sent (e.g. "john", "+123")
@@ -36,17 +36,19 @@ export const searchUsers = async (req: Request, res: Response) => {
     return;
   }
 
-  // find users matching the query on name, email, or phone (case-insensitive)
+  // escapes regex special chars so user input can't break/abuse the query
+  const safeQuery = query.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  // find users matching the query on name, email (case-insensitive)
   // excludes me, caps at 10 results, hides password
   const filteredUsers = await User.find({
     _id: { $ne: loggedInUserId },
     $or: [
-      { name: { $regex: query, $options: "i" } },
-      { email: { $regex: query, $options: "i" } },
-      { phone: { $regex: query, $options: "i" } },
+      { name: { $regex: safeQuery, $options: "i" } },
+      { email: { $regex: safeQuery, $options: "i" } },
     ],
   })
-    .select("-password")
+    .select("name email avatar")
     .limit(10)
     .lean();
 
@@ -82,6 +84,12 @@ export const getMessageByUserId = async (req: Request, res: Response) => {
     );
   }
 
+  // cursor = _id of the oldest message the client already has
+  const { oldestMessagesId } = req.query;
+
+  // page size (default 30, max 100)
+  const limit = Math.min(Number(req.query.limit) || 30, 100);
+
   // the other person's _id (from URL param)
   const { id: otherUserId } = req.params;
 
@@ -102,17 +110,18 @@ export const getMessageByUserId = async (req: Request, res: Response) => {
     ],
   };
 
-  // fetch all messages in this conversation, oldest first (chronological order)
-  const messages = await Message.find(filter).sort({ createdAt: 1 });
-
-  // no messages yet → return empty (not an error, just a new conversation)
-  if (messages?.length === 0) {
-    res.status(StatusCodes.OK).json({ messages: [] });
-    return;
+  
+  // only messages older than the cursor
+  if (typeof oldestMessagesId === "string" && Types.ObjectId.isValid(oldestMessagesId)) {
+    filter._id = { $lt: new Types.ObjectId(oldestMessagesId) };
   }
 
+  // fetch all messages in this conversation, oldest first (chronological order)
+  const messages = await Message.find(filter).sort({ _id: -1 }).limit(limit);
+  messages.reverse();
+
   // send the conversation back to the client
-  res.status(StatusCodes.OK).json({ messages });
+  res.status(StatusCodes.OK).json({ messages, hasMore: messages.length === limit });
 };
 
 // sends a 1:1 message (text and/or attachment) to another user
@@ -219,11 +228,14 @@ export const sendMessage = async (req: Request, res: Response) => {
     }
   }
 
+  // getSocketsForUser returns an array, not a single string
+  const receiverSockets = await getSocketsForUser(receiverId.toString());
+
   // build + save the message document
   const newMessage = new Message({
     senderId,
     receiverId,
-    status: "sent",
+    status: receiverSockets.length > 0 ? "delivered" : "sent", // online = delivered
     content,
     attachment,
   });
@@ -235,10 +247,6 @@ export const sendMessage = async (req: Request, res: Response) => {
     { path: "receiverId", select: "name email avatar" },
   ]);
 
-  // if the recipient is online, push the message to their open tabs in real-time
-  // getSocketsForUser returns an array, not a single string
-  const receiverSockets = await getSocketsForUser(receiverId.toString());
-
   if (receiverSockets.length > 0) {
     // user is online → socket handles it
     receiverSockets.forEach((socketId) =>
@@ -248,26 +256,34 @@ export const sendMessage = async (req: Request, res: Response) => {
     // user is offline -> send a push notification via FCM
     const receiver = await User.findById(receiverId).select("+fcmToken");
     if (receiver?.fcmToken) {
-      await messaging.send({
-        token: receiver.fcmToken,
-        notification: {
-          title: "new message",
-          body: content?.substring(0, 20) || "new attachment",
-        },
-        data: {
-          messageId: newMessage._id.toString(),
-          type: "message",
-        },
-      });
+      try {
+        await messaging.send({
+          token: receiver.fcmToken,
+          notification: {
+            title: "new message",
+            body: content?.substring(0, 20) || "new attachment",
+          },
+          data: {
+            messageId: newMessage._id.toString(),
+            type: "message",
+          },
+        });
+      } catch (error) {
+        console.error("FCM send failed", error);
+      }
     }
   }
+
+  // sender's other tabs get the message too (addMessage dedupes by _id)
+  const senderSockets = await getSocketsForUser(senderId.toString());
+  senderSockets.forEach((id) => io.to(id).emit("message:new", populateMessage));
 
   // also return it in the HTTP response (the sender's tab gets it immediately)
   res.status(StatusCodes.CREATED).json({ message: populateMessage });
 };
 
 // gets the list of users I've chatted with + when the last message was (for sorting)
-export const getAllChats = async (req: Request, res: Response) => {
+export const getChatsHistory = async (req: Request, res: Response) => {
   // my _id (set by auth middleware)
   const loggedInUserId = req.user?._id;
   if (!loggedInUserId) {
@@ -296,6 +312,18 @@ export const getAllChats = async (req: Request, res: Response) => {
           },
         },
         createdAt: 1,
+        isUnread: {
+          $cond: [
+            {
+              $and: [
+                { $eq: ["$receiverId", loggedInUserId] },
+                { $ne: ["$status", "seen"] },
+              ],
+            },
+            1,
+            0,
+          ],
+        },
       },
     },
     // collapse to one entry per partner, keeping the most recent timestamp
@@ -303,12 +331,13 @@ export const getAllChats = async (req: Request, res: Response) => {
       $group: {
         _id: "$chatPartnerId",
         lastMessageAt: { $max: "$createdAt" }, // most recent message time with this person
+        unReadCount: { $sum: "$isUnread" }, // total unread from this partner
       },
     },
   ]);
 
   // extract the partner IDs
-  const uniqueChatUserIds = chatPartners.map((p) => p._id);
+  const uniqueChatUserIds = chatPartners.map((partner) => partner._id);
 
   // fetch the actual user docs
   const chats = await User.find({ _id: { $in: uniqueChatUserIds } }).select(
@@ -316,11 +345,14 @@ export const getAllChats = async (req: Request, res: Response) => {
   );
 
   // attach lastMessageAt to each user so the client can sort by most recent
-  const result = chats.map((user) => ({
-    ...user.toObject(),
-    lastMessageAt: chatPartners.find((p) => p._id.equals(user._id))
-      ?.lastMessageAt,
-  }));
+  const result = chats.map((user) => {
+    const partner = chatPartners.find((p) => p._id.equals(user._id));
+    return {
+      ...user.toObject(),
+      lastMessageAt: partner?.lastMessageAt,
+      unreadCount: partner?.unreadCount ?? 0,
+    };
+  });
 
   // send back (client sorts by lastMessageAt descending)
   res.status(StatusCodes.OK).json({ chats: result });
@@ -410,14 +442,12 @@ export const deleteMessage = async (req: Request, res: Response) => {
   // delete the message doc from MongoDB
   await message.deleteOne();
 
-  // tell the receiver's open tabs to remove this message from their UI
-  // getSocketsForUser returns an array
-  const receiverSockets = await getSocketsForUser(
-    message.receiverId.toString(),
-  );
-  receiverSockets.forEach((socketId) =>
-    io.to(socketId).emit("message:delete", { messageId }),
-  );
+  // receiver + my other tabs
+  const socketIds = [
+    ...(await getSocketsForUser(message.receiverId.toString())),
+    ...(await getSocketsForUser(loggedInUserId.toString())),
+  ];
+  socketIds.forEach((id) => io.to(id).emit("message:delete", { messageId }));
 
   res.status(StatusCodes.OK).json({ message: "Message Deleted successfully" });
 };
@@ -506,14 +536,12 @@ export const updateMessage = async (req: Request, res: Response) => {
     );
   }
 
-  // tell the receiver's open tabs the message was edited
-  // getSocketsForUser returns an array
-  const receiverSockets = await getSocketsForUser(
-    message.receiverId.toString(),
-  );
-  receiverSockets.forEach((socketId) => {
-    io.to(socketId).emit("message:update", message);
-  });
+  // receiver + my other tabs
+  const socketIds = [
+    ...(await getSocketsForUser(message.receiverId.toString())),
+    ...(await getSocketsForUser(loggedInUserId.toString())),
+  ];
+  socketIds.forEach((id) => io.to(id).emit("message:delete", { message }));
 
   res.status(StatusCodes.OK).json(message);
 };
@@ -606,13 +634,13 @@ export const reactToMessage = async (req: Request, res: Response) => {
 };
 
 // searches messages between me and another user by text content
-export const searchMessages = async (req: Request, res: Response) => {
+export const searchInMessages = async (req: Request, res: Response) => {
   // my _id (set by auth middleware)
   const loggedInUserId = req.user?._id;
   // the other person's _id (from URL param)
   const { id: otherUserId } = req.params;
   // the search term (e.g. "meeting tomorrow")
-  const query = req.query.q as string;
+  const query = req.query.query as string;
 
   if (!loggedInUserId) {
     throw new CustomError("Unauthorized", StatusCodes.UNAUTHORIZED);
