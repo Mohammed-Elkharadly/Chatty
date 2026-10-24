@@ -17,6 +17,8 @@ export const logout = async (req: Request, res: Response) => {
   if (req.user) {
     // remove the stored refresh token from the DB → all future refresh attempts will fail
     await req.user.invalidateRefreshToken();
+    // no more pushes to this browser after logout
+    await User.updateOne({ _id: req.user._id }, { $unset: { fcmToken: 1 } });
   }
   // clear both accessToken + refreshToken cookies from the browser
   TokenHandler.clearCookie(res);
@@ -270,4 +272,4 @@ export const notifications = async (req: Request, res: Response) => {
   await User.findByIdAndUpdate(userId, { fcmToken });
 
   res.status(200).json({ message: "Token stored" });
-};   
+};

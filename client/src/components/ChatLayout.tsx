@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import useSocket from "../hooks/useSocket";
+import usePushNotifications from "../hooks/usePushNotifications";
 
 export type ChatLayoutContext = {
   isHidden: boolean;
@@ -11,6 +12,7 @@ export type ChatLayoutContext = {
 const ChatLayout = () => {
   // connect socket when autheticated
   useSocket();
+  usePushNotifications();
 
   const [isHidden, setIsHidden] = useState(() => {
     return localStorage.getItem("sidebarHidden") === "true";

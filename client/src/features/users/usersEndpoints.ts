@@ -27,7 +27,8 @@ export const usersApi = apiQuery.injectEndpoints({
       providesTags: ["Contacts"],
     }),
     searchUsers: builder.query<{ contacts: Contact[] }, string>({
-      query: (searchTerm) => `/messages/search?query=${encodeURIComponent(searchTerm)}`,
+      query: (searchTerm) =>
+        `/messages/search?query=${encodeURIComponent(searchTerm)}`,
     }),
     // logoutUser: Ends the session on the server and clears everything locally.
     logoutUser: builder.mutation<{ message: string }, void>({
@@ -114,6 +115,13 @@ export const usersApi = apiQuery.injectEndpoints({
         }
       },
     }),
+    saveFcmToken: builder.mutation<{ message: string }, { fcmToken: string }>({
+      query: (body) => ({
+        url: "/users/fcm-token",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -125,4 +133,5 @@ export const {
   useChangePasswordMutation,
   useDeleteAccountMutation,
   useCheckAuthQuery,
+  useSaveFcmTokenMutation,
 } = usersApi;

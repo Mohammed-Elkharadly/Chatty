@@ -3,7 +3,7 @@ import type { SubmitEvent, ChangeEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import type { SignupData } from "../features/auth/auth.types";
 import { useSignupUserMutation } from "../features/auth/authEndpoints";
-import GoogleAuthButton from "../components/GoogleAuthButton";
+import GoogleAuthButton from "../utils/components/GoogleAuthButton";
 import type { ApiError } from '../app/middleware/rtkQueryErrorMiddleware';
 
 const initialSignupForm: SignupData = {

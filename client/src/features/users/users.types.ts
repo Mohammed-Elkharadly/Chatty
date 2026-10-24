@@ -1,4 +1,10 @@
 import type { User } from "../auth/auth.types";
+export interface LastMessage {
+  content?: string;
+  attachmentType?: "image" | "video" | "audio" | "pdf" | "document";
+  senderId: string;
+}
+
 export interface Contact {
   _id: string;
   name: string;
@@ -6,10 +12,11 @@ export interface Contact {
   avatar: string;
   createdAt: string;
   updatedAt: string;
-  lastMessageAt?: string; 
+  lastMessageAt?: string;
   unreadCount?: number;
+  lastSeen?: string;
+  lastMessage?: LastMessage;
 }
-
 
 export interface ChangePasswordData {
   currentPassword: string;

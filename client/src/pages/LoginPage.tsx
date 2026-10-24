@@ -2,10 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import type { SubmitEvent, ChangeEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useLoginUserMutation } from "../features/auth/authEndpoints";
-import toast from "react-hot-toast";
 import type { LoginCredentials } from "../features/auth/auth.types";
 import type { ApiError } from "../app/middleware/rtkQueryErrorMiddleware";
-import GoogleAuthButton from "../components/GoogleAuthButton";
+import GoogleAuthButton from "../utils/components/GoogleAuthButton";
 
 const initialLoginForm: LoginCredentials = {
   email: "",
@@ -38,8 +37,7 @@ const LoginPage = () => {
   const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const data = await loginUser(formData).unwrap();
-      toast.success(data.message);
+      await loginUser(formData).unwrap();
     } catch (error) {
       console.error("Failed to login", error);
     }

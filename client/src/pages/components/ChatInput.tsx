@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import useVoiceRecorder from "../../hooks/useVoiceRecorder";
 import type { KeyboardEvent, ChangeEvent } from "react";
 import { useAppSelector } from "../../app/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,12 +12,20 @@ import {
   faXmarkCircle,
   faFile,
   faPenToSquare,
+  faMicrophone,
+  faTrash,
+  faFaceSmile,
 } from "@fortawesome/free-solid-svg-icons";
 import toast from "react-hot-toast";
 import EmojiPicker, { Theme, type EmojiClickData } from "emoji-picker-react";
-import { faFaceSmile } from "@fortawesome/free-solid-svg-icons";
+import VoiceWaveform from "../../utils/components/VoiceWaveform";
+
 
 const MAX_FILE_MB = 10;
+
+// 75 => "1:15"
+const formatDuration = (second: number) =>
+  `${Math.floor(second / 60)}:${String(second % 60).padStart(2, "0")}`;
 
 interface ChatInputProps {
   editingId: string | null; // which message is being edited, or null for a new message
@@ -26,6 +35,9 @@ interface ChatInputProps {
 const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
   const messages = useAppSelector((state) => state.messages.messages);
   const editingMessage = messages.find((msg) => msg._id === editingId) ?? null;
+
+  const { isRecording, seconds, start, stop, cancel, audioLevel } =
+    useVoiceRecorder();
 
   const [content, setContent] = useState(editingMessage?.content ?? "");
   const [file, setFile] = useState<File | null>(null);
@@ -39,10 +51,15 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
   );
 
   const fileRef = useRef<HTMLInputElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
   const isEditing = editingMessage !== null;
   const isPending = isSending || isUpdating;
+
+  // drop any recording when the user opens another chat
+  useEffect(() => {
+    cancel();
+  }, [selectedContact?._id, cancel]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -85,13 +102,37 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
     setFile(picked);
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key !== "Enter") return;
     if (e.nativeEvent.isComposing || isPending) return;
     if (isEditing) {
       handleUpdate();
     } else {
       handleSend();
+    }
+  };
+
+  const handleMic = async () => {
+    try {
+      await start();
+    } catch (error) {
+      console.error("Failed to start recording:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to start recording",
+      );
+    }
+  };
+
+  const handleSendVoice = async () => {
+    const voice = await stop();
+    // under 1 second is an accidental tap
+    if (!voice || !selectedContact || seconds < 1) return;
+    const formData = new FormData();
+    formData.append("attachment", voice);
+    try {
+      await sendMessage({ receiverId: selectedContact._id, formData });
+    } catch (error) {
+      console.error("Failed to send voice message", error);
     }
   };
 
@@ -200,93 +241,136 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
         </div>
       )}
 
-      <div className='flex flex-1 items-center gap-2'>
-        <input
-          type='text'
-          id='message'
-          aria-label='message'
-          ref={inputRef}
-          className='input-bordered input input-sm flex-1 focus:outline-none focus:ring-0'
-          value={content}
-          placeholder={isEditing ? "Edit message..." : "Type a message..."}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isPending}
-          autoComplete='off'
-        />
-
-        <input
-          type='file'
-          id='file'
-          aria-label='attachment'
-          className='hidden'
-          ref={fileRef}
-          accept='image/*,video/*,audio/*,application/pdf,.doc,.docx'
-          onChange={handleFile}
-        />
-        <div ref={emojiRef}>
+      {isRecording ? (
+        <div className='flex flex-1 items-center gap-3'>
           <button
             type='button'
-            aria-label='emoji'
-            className='text-2xl text-yellow-500 cursor-pointer'
-            onClick={() => setEmojiOpen((open) => !open)}
+            aria-label='cancel recording'
+            className='btn btn-ghost btn-sm btn-square text-error'
+            onClick={cancel}
           >
-            <FontAwesomeIcon icon={faFaceSmile} />
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
+          <span className='h-2 w-2 animate-pulse rounded-full bg-red-500' />
+
+          <VoiceWaveform level={audioLevel} />
+
+          <span className='text-sm tabular-nums'>
+            {formatDuration(seconds)}
+          </span>
+          <button
+            type='button'
+            className='btn btn-sm ml-auto bg-blue-900 hover:bg-primary'
+            onClick={handleSendVoice}
+            disabled={isSending}
+          >
+            {isSending ? (
+              <span className='loading loading-xs loading-spinner' />
+            ) : (
+              "Send"
+            )}
+          </button>
+        </div>
+      ) : (
+        <div className='flex flex-1 items-center gap-2'>
+          <textarea
+            id='message'
+            aria-label='message'
+            ref={inputRef}
+            className='input pt-1 input-bordered input-sm flex-1 min-w-0 resize-none overflow-y-auto no-scrollbar whitespace-pre-wrap wrap-break-word focus:outline-none focus:ring-0'
+            value={content}
+            placeholder={isEditing ? "Edit message..." : "Type a message..."}
+            onChange={(e) => setContent(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isPending}
+            autoComplete='off'
+          />
+
+          <input
+            type='file'
+            id='file'
+            aria-label='attachment'
+            className='hidden'
+            ref={fileRef}
+            accept='image/*,video/*,audio/*,application/pdf,.doc,.docx'
+            onChange={handleFile}
+          />
+          <div ref={emojiRef}>
+            <button
+              type='button'
+              aria-label='emoji'
+              className='text-2xl text-yellow-500 cursor-pointer'
+              onClick={() => setEmojiOpen((open) => !open)}
+            >
+              <FontAwesomeIcon icon={faFaceSmile} />
+            </button>
+
+            {emojiOpen && (
+              <div className='absolute right-0 bottom-14 z-50'>
+                <EmojiPicker
+                  theme={Theme.DARK}
+                  onEmojiClick={handleEmojiClick}
+                  height={320}
+                  width={250}
+                  searchDisabled
+                  previewConfig={{ showPreview: false }}
+                  skinTonesDisabled
+                  style={
+                    {
+                      "--epr-emoji-size": "20px",
+                      "--epr-category-label-height": "20px",
+                      "--epr-header-padding": "4px",
+                    } as React.CSSProperties
+                  }
+                />
+              </div>
+            )}
+          </div>
+
+          {!isEditing && !content.trim() && (
+            <button
+              type='button'
+              aria-label='record voice message'
+              className='btn btn-ghost btn-sm btn-square bg-gray-500'
+              onClick={handleMic}
+            >
+              <FontAwesomeIcon icon={faMicrophone} />
+            </button>
+          )}
+
+          <button
+            type='button'
+            aria-label='upload'
+            className='btn btn-ghost btn-sm btn-square bg-gray-500'
+            onClick={() => fileRef.current?.click()}
+          >
+            <FontAwesomeIcon icon={faUpload} />
           </button>
 
-          {emojiOpen && (
-            <div className='absolute right-0 bottom-14 z-50'>
-              <EmojiPicker
-                theme={Theme.DARK}
-                onEmojiClick={handleEmojiClick}
-                height={320}
-                width={250}
-                searchDisabled
-                previewConfig={{ showPreview: false }}
-                skinTonesDisabled
-                style={
-                  {
-                    "--epr-emoji-size": "20px",
-                    "--epr-category-label-height": "20px",
-                    "--epr-header-padding": "4px",
-                  } as React.CSSProperties
-                }
+          <button
+            type='button'
+            onClick={isEditing ? handleUpdate : handleSend}
+            className='btn btn-sm bg-blue-900 hover:bg-primary'
+            disabled={
+              isPending ||
+              (!content.trim() &&
+                !file &&
+                (!isEditing || !editingMessage?.attachment))
+            }
+          >
+            {isPending ? (
+              <span
+                className='loading loading-xs loading-spinner'
+                aria-label='spinner'
               />
-            </div>
-          )}
+            ) : isEditing ? (
+              "Update"
+            ) : (
+              "Send"
+            )}
+          </button>
         </div>
-
-        <button
-          type='button'
-          aria-label='upload'
-          className='btn btn-ghost btn-sm btn-square bg-gray-500'
-          onClick={() => fileRef.current?.click()}
-        >
-          <FontAwesomeIcon icon={faUpload} />
-        </button>
-        <button
-          type='button'
-          onClick={isEditing ? handleUpdate : handleSend}
-          className='btn btn-sm bg-blue-900 hover:bg-primary'
-          disabled={
-            isPending ||
-            (!content.trim() &&
-              !file &&
-              (!isEditing || !editingMessage?.attachment))
-          }
-        >
-          {isPending ? (
-            <span
-              className='loading loading-xs loading-spinner'
-              aria-label='spinner'
-            />
-          ) : isEditing ? (
-            "Update"
-          ) : (
-            "Send"
-          )}
-        </button>
-      </div>
+      )}
     </div>
   );
 };

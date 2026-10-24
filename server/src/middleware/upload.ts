@@ -5,8 +5,15 @@ import { StatusCodes } from "http-status-codes";
 // whitelist of allowed MIME types grouped by category
 export const ALLOWED_MIME_TYPES = {
   image: ["image/jpeg", "image/png", "image/webp", "image/gif"],
-  video: ["video/mp4", "video/webm", "video/quicktime"], 
-  audio: ["audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/webm"], 
+  video: ["video/mp4", "video/webm", "video/quicktime"],
+  audio: [
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/ogg",
+    "audio/webm",
+    "audio/mp4",
+  ],
   pdf: ["application/pdf"],
   document: [
     "application/msword", // .doc
@@ -58,4 +65,4 @@ export const upload = multer({
   limits: {
     fileSize: 10 * 1024 * 1024, // 25MB max per file (matches Cloudinary free tier image limit)
   },
-});   
+});

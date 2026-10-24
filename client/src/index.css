@@ -19,3 +19,10 @@ body,
     scrollbar-width: none;
   }
 }
+
+/* corner radius of the audio player (Chrome/Edge/Brave) */
+audio::-webkit-media-controls-enclosure {
+  border-radius: 0px; /* use 0 for square corners */
+  background-color: #191e24;
+}
+

@@ -25,6 +25,7 @@ interface IMessage {
   content?: string; // text body (optional if there's an attachment)
   attachment?: IAttachment; // embedded file info (optional if it's a text message)
   reactions: IReactions[]; // list of who reacted with what
+  editedAt: Date;
 }
 
 // the type Mongoose gives you when you query a message
@@ -112,6 +113,7 @@ const messageSchema = new Schema<IMessage>(
       type: [reactionSchema],
       default: [],
     },
+    editedAt: { type: Date },
   },
   {
     // auto-adds createdAt + updatedAt

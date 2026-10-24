@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import EmojiPicker, { Theme, type EmojiClickData } from "emoji-picker-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFaceSmile } from "@fortawesome/free-solid-svg-icons";
-import { useReactToMessageMutation } from "../features/messages/messageEndpoints";
+import { useReactToMessageMutation } from "../../features/messages/messageEndpoints";
 
 interface Props {
   messageId: string;

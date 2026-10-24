@@ -8,6 +8,7 @@ import { GroupMember } from "../models/GroupMember.js";
 import redisClient from "./redis.js";
 import type { Redis } from "ioredis";
 import { Message } from "../models/Message.js";
+import { User } from "../models/User.js";
 
 const parseCookieHeader = (header: string): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -155,10 +156,19 @@ export const initSocketServer = (
     socket.on("disconnect", () => {
       clearInterval(keepAlive); // stop refreshing once the socket is gone
       removePresence(userId, socket.id)
-        .then(({ wentOffline, onlineUserIds }) => {
-          if (wentOffline) {
-            localIo.emit("users:online", onlineUserIds);
-          }
+        .then(async ({ wentOffline, onlineUserIds }) => {
+          if (!wentOffline) return;
+
+          const lastSeen = new Date();
+
+          await User.findByIdAndUpdate(userId, { lastSeen });
+
+          localIo.emit("users:online", onlineUserIds);
+
+          localIo.emit("user:lastSeen", {
+            userId,
+            lastSeen: lastSeen.toISOString(),
+          });
         })
         .catch((error) => console.error("failed to remove presence", error));
     });

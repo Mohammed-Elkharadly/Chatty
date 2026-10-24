@@ -11,18 +11,20 @@ import { faAngleRight } from "@fortawesome/free-solid-svg-icons";
 const ChatPage = () => {
   const { isHidden, setIsHidden } = useOutletContext<ChatLayoutContext>();
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  // id of the search result the user clicked
+  const [jumpToId, setJumpToId] = useState<string | null>(null);
+
   const selectedContact = useAppSelector(
     (state) => state.users.selectedContact,
   );
 
-  // shared between ChatMessages (sets it via the Update button) and
-  // ChatInput (reads it to prefill the input + show the edit banner)
-  const [editingId, setEditingId] = useState<string | null>(null);
-
   const [prevContactId, setPrevContactId] = useState(selectedContact?._id);
+
   if (selectedContact?._id !== prevContactId) {
     setPrevContactId(selectedContact?._id);
     setEditingId(null); // contact changed → cancel any in-progress edit
+    setJumpToId(null);
   }
 
   if (!selectedContact) {
@@ -48,8 +50,13 @@ const ChatPage = () => {
 
   return (
     <div className='flex h-screen flex-1 flex-col'>
-      <ChatHeader />
-      <ChatMessages onEdit={setEditingId} />
+      {/** The key resets the search box when you switch contacts */}
+      <ChatHeader key={selectedContact._id} onJump={setJumpToId} />
+      <ChatMessages
+        onEdit={setEditingId}
+        jumpToId={jumpToId}
+        setJumpToId={setJumpToId}
+      />
       <ChatInput
         key={editingId ?? "new"}
         editingId={editingId}

@@ -1,4 +1,4 @@
-import type { Reaction } from "../features/messages/message.types";
+import type { Reaction } from "../../features/messages/message.types";
 
 const ReactionBar = ({ reactions }: { reactions: Reaction[] }) => {
   if (!reactions.length) return null;

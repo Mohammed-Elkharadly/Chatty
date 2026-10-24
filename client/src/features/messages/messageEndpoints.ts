@@ -51,8 +51,8 @@ export const messageApi = apiQuery.injectEndpoints({
       },
     }),
     sendMessage: builder.mutation<
-      { message: Message },
-      { receiverId: string; formData: FormData }
+      { message: Message }, // shap of the response data
+      { receiverId: string; formData: FormData } // shap of the request data
     >({
       query: ({ receiverId, formData }) => ({
         url: `/messages/send/${receiverId}`,
@@ -80,6 +80,7 @@ export const messageApi = apiQuery.injectEndpoints({
         url: `/messages/${messageId}`,
         method: "DELETE",
       }),
+      invalidatesTags: ["Contacts"],
       async onQueryStarted(messageId, { dispatch, queryFulfilled }) {
         try {
           await queryFulfilled;
@@ -95,6 +96,7 @@ export const messageApi = apiQuery.injectEndpoints({
         method: "PATCH",
         body,
       }),
+      invalidatesTags: ["Contacts"],
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -122,6 +124,14 @@ export const messageApi = apiQuery.injectEndpoints({
         }
       },
     }),
+    searchInMessage: builder.query<
+      { messages: Message[] }, // shap of the response data
+      { userId: string; queryTerm: string } // shap of the request data
+    >({
+      query: ({ userId, queryTerm }) => ({
+        url: `/messages/search/${userId}?query=${encodeURIComponent(queryTerm)}`,
+      }),
+    }),
   }),
 });
 
@@ -133,4 +143,5 @@ export const {
   useDeleteMessageMutation,
   useUpdateMessageMutation,
   useReactToMessageMutation,
+  useLazySearchInMessageQuery,
 } = messageApi;

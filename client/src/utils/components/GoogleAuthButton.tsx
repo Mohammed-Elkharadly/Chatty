@@ -1,5 +1,5 @@
 import { GoogleLogin } from "@react-oauth/google";
-import { useOAuthLoginMutation } from "../features/auth/authEndpoints";
+import { useOAuthLoginMutation } from "../../features/auth/authEndpoints";
 import { useNavigate } from "react-router-dom";
 
 const GoogleAuthButton = () => {

@@ -30,12 +30,12 @@ const Sidebar = ({ ...props }: Props) => {
          }`}
     >
       {/* Toggle */}
-      <div className='flex flex-col items-center gap-1 p-2'>
+      <div className='flex flex-col items-center gap-2 p-1.5'>
         {/* Hide / show */}
         <button
           type='button'
           title='hide small menu'
-          className='btn btn-square w-full hover:bg-blue-900'
+          className='btn btn-square w-full hover:bg-blue-900 shadow-sm shadow-black'
           onClick={() => setIsHidden((prev) => !prev)}
           disabled={!selectedContact}
           aria-label='Hide sidebar'
@@ -47,7 +47,7 @@ const Sidebar = ({ ...props }: Props) => {
         <button
           type='button'
           title='show full menu'
-          className='btn btn-square w-full hover:bg-blue-900'
+          className='btn btn-square w-full hover:bg-blue-900 shadow-sm shadow-black'
           onClick={() => setIsOpen((prev) => !prev)}
           aria-label='Toggle sidebar width'
         >

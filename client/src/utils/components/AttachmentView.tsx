@@ -11,7 +11,8 @@ const AttachmentView = ({ attachment }: { attachment: Attachment }) => {
       <img
         src={url}
         alt={fileName}
-        className='mb-2 mr-2.5 max-h-64 max-w-full cursor-pointer rounded-md'
+        aria-controls=""
+        className='mt-1 mb-2 ml-1 pr-5 max-h-64 max-w-full'
         onClick={() => window.open(url, "_blank")}
       />
     );
@@ -21,12 +22,12 @@ const AttachmentView = ({ attachment }: { attachment: Attachment }) => {
       <video
         src={url}
         controls
-        className='mb-2 mr-2.5 max-h-64 max-w-full rounded-md'
+        className='mt-1 mb-2 ml-1 pr-5 max-h-64 max-w-full'
       />
     );
   }
   if (type === "audio") {
-    return <audio src={url} controls className='mb-2 pr-2.5 max-w-full' />;
+    return <audio src={url} controls className='mt-1 mb-2 ml-1 pr-5 h-9 max-w-full' />;
   }
 
   // pdf / document: compact download chip

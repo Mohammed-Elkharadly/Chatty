@@ -14,6 +14,7 @@ import {
 import { getAttachmentType } from "../middleware/upload.js";
 import { Block } from "../models/Block.js";
 import { messaging } from "../config/firebase.js";
+import { ENV } from "../config/env.js";
 
 // searches for users by name, email (excludes self, max 10 results)
 export const searchForUsers = async (req: Request, res: Response) => {
@@ -110,9 +111,11 @@ export const getMessageByUserId = async (req: Request, res: Response) => {
     ],
   };
 
-  
   // only messages older than the cursor
-  if (typeof oldestMessagesId === "string" && Types.ObjectId.isValid(oldestMessagesId)) {
+  if (
+    typeof oldestMessagesId === "string" &&
+    Types.ObjectId.isValid(oldestMessagesId)
+  ) {
     filter._id = { $lt: new Types.ObjectId(oldestMessagesId) };
   }
 
@@ -121,7 +124,9 @@ export const getMessageByUserId = async (req: Request, res: Response) => {
   messages.reverse();
 
   // send the conversation back to the client
-  res.status(StatusCodes.OK).json({ messages, hasMore: messages.length === limit });
+  res
+    .status(StatusCodes.OK)
+    .json({ messages, hasMore: messages.length === limit });
 };
 
 // sends a 1:1 message (text and/or attachment) to another user
@@ -267,8 +272,17 @@ export const sendMessage = async (req: Request, res: Response) => {
             messageId: newMessage._id.toString(),
             type: "message",
           },
+          // clicking the notification opens the app
+          webpush: { fcmOptions: { link: ENV.CLIENT_URL } },
         });
-      } catch (error) {
+      } catch (error: any) {
+        // token is dead (browser data cleared / permission revoked) → forget it
+        if (error?.code === "messaging/registration-token-not-registered") {
+          await User.updateOne(
+            { _id: receiverId },
+            { $unset: { fcmToken: 1 } },
+          );
+        }
         console.error("FCM send failed", error);
       }
     }
@@ -295,13 +309,12 @@ export const getChatsHistory = async (req: Request, res: Response) => {
 
   // aggregation: find unique chat partners + the timestamp of their most recent message
   const chatPartners = await Message.aggregate([
-    // only messages where I'm involved
     {
       $match: {
         $or: [{ senderId: loggedInUserId }, { receiverId: loggedInUserId }],
       },
     },
-    // figure out who the "other person" is for each message
+    { $sort: { createdAt: -1 } }, // newest first, so $first below = latest message
     {
       $project: {
         chatPartnerId: {
@@ -312,6 +325,9 @@ export const getChatsHistory = async (req: Request, res: Response) => {
           },
         },
         createdAt: 1,
+        content: 1,
+        senderId: 1,
+        attachmentType: "$attachment.type", // image / video / audio / pdf / document
         isUnread: {
           $cond: [
             {
@@ -326,12 +342,18 @@ export const getChatsHistory = async (req: Request, res: Response) => {
         },
       },
     },
-    // collapse to one entry per partner, keeping the most recent timestamp
     {
       $group: {
         _id: "$chatPartnerId",
-        lastMessageAt: { $max: "$createdAt" }, // most recent message time with this person
-        unReadCount: { $sum: "$isUnread" }, // total unread from this partner
+        lastMessageAt: { $first: "$createdAt" },
+        lastMessage: {
+          $first: {
+            content: "$content",
+            attachmentType: "$attachmentType",
+            senderId: "$senderId",
+          },
+        },
+        unreadCount: { $sum: "$isUnread" },
       },
     },
   ]);
@@ -341,7 +363,7 @@ export const getChatsHistory = async (req: Request, res: Response) => {
 
   // fetch the actual user docs
   const chats = await User.find({ _id: { $in: uniqueChatUserIds } }).select(
-    "name email avatar",
+    "name email avatar lastSeen",
   );
 
   // attach lastMessageAt to each user so the client can sort by most recent
@@ -350,6 +372,7 @@ export const getChatsHistory = async (req: Request, res: Response) => {
     return {
       ...user.toObject(),
       lastMessageAt: partner?.lastMessageAt,
+      lastMessage: partner?.lastMessage,
       unreadCount: partner?.unreadCount ?? 0,
     };
   });
@@ -521,6 +544,7 @@ export const updateMessage = async (req: Request, res: Response) => {
 
   // update the text (keep old text if no new content was sent)
   message.content = content ?? message.content;
+  message.editedAt = new Date();
   await message.save();
 
   // delete the old file from Cloudinary (only if we replaced it and it existed)
@@ -541,7 +565,7 @@ export const updateMessage = async (req: Request, res: Response) => {
     ...(await getSocketsForUser(message.receiverId.toString())),
     ...(await getSocketsForUser(loggedInUserId.toString())),
   ];
-  socketIds.forEach((id) => io.to(id).emit("message:delete", { message }));
+  socketIds.forEach((id) => io.to(id).emit("message:update", { message }));
 
   res.status(StatusCodes.OK).json(message);
 };

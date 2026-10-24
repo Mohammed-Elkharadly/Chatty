@@ -22,6 +22,7 @@ export interface Message {
   status: "sent" | "delivered" | "seen";
   createdAt: string | Date;
   updatedAt: string | Date;
+  editedAt?: boolean;
 }
 
 export interface MessageState {

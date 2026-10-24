@@ -4,6 +4,7 @@ import {
   useEffect,
   useCallback,
   useLayoutEffect,
+  startTransition,
 } from "react";
 import { useAppSelector, useAppDispatch } from "../../app/hooks";
 import DeleteMessage from "./DeleteMessage";
@@ -24,12 +25,14 @@ import {
   faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
 // import EditMessage from "./EditMessage";
-import AttachmentView from "./AttachmentView";
-import ReactionPicker from "../../components/ReactionPicker";
-import ReactionBar from "../../components/ReactionBar";
+import AttachmentView from "../../utils/components/AttachmentView";
+import ReactionPicker from "../../utils/components/ReactionPicker";
+import ReactionBar from "../../utils/components/ReactionBar";
 
 interface ChatMessagesProps {
-  onEdit: (id: string) => void; // tells ChatPage which message to load into ChatInput
+  onEdit: (id: string) => void;
+  jumpToId: string | null; // message picked in search
+  setJumpToId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const formatTime = new Intl.DateTimeFormat("en-US", {
@@ -37,7 +40,7 @@ const formatTime = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
-const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
+const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [atBottom, setAtBottom] = useState(true);
   const lastReadRef = useRef<string | null>(null);
@@ -47,6 +50,8 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
   const prevHeightRef = useRef<number | null>(null);
   // last scrollTop, used to tell scroll direction
   const lastScrollTopRef = useRef(0);
+  // message shown with a ring for a moment after a jump
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   const dispatch = useAppDispatch();
 
@@ -164,6 +169,30 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
     dispatch(resetMessages());
   }, [dispatch, selectedContact?._id]);
 
+  // scrolls to the searched message; loads older pages until it exists
+  useEffect(() => {
+    if (!jumpToId) return;
+    const element = document.getElementById(`msg-${jumpToId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      startTransition(() => {
+        setHighlightId(jumpToId);
+        setJumpToId(null);
+      });
+    } else if (hasMore) {
+      loadOlderMessages(); // effect re-runs when the new page arrives
+    } else {
+      setJumpToId(null); // no more pages and still missing → give up
+    }
+  }, [jumpToId, messages, hasMore, loadOlderMessages, setJumpToId]);
+
+  // removes the highlight after 2 seconds
+  useEffect(() => {
+    if (!highlightId) return;
+    const timer = setTimeout(() => setHighlightId(null), 2000);
+    return () => clearTimeout(timer);
+  }, [highlightId]);
+
   if (!selectedContact) return null;
 
   return (
@@ -175,7 +204,7 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
         lastScrollTopRef.current = top;
         if (scrollingUp && top < 80) loadOlderMessages();
       }}
-      className='flex relative min-h-0 flex-1 flex-col gap-4 overflow-y-auto bg-slate-900 no-scrollbar'
+      className='flex relative min-h-0 flex-1 flex-col gap-4 py-4 overflow-y-auto bg-slate-900 no-scrollbar'
     >
       {isLoadingOlder && (
         <span className='loading loading-spinner loading-sm mx-auto' />
@@ -188,16 +217,15 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
         messages.map((msg) => {
           const isMe = msg.senderId === user?.id;
           const isMenuOpen = openMenuId === msg._id;
-          const isEdited =
-            !!msg.updatedAt &&
-            new Date(msg.updatedAt) > new Date(msg.createdAt);
+          const isEdited = !!msg.editedAt;
 
           return (
             <div
               key={msg._id}
-              className={`relative flex items-center gap-2 ${
+              id={`msg-${msg._id}`}
+              className={`relative flex items-center gap-2 rounded-xl transition ${
                 isMe ? "justify-end" : "justify-start"
-              }`}
+              } ${highlightId === msg._id ? "ring-2 ring-yellow-400" : ""}`}
             >
               {/* Show ReactionPicker on the side */}
               {!isMe && <ReactionPicker messageId={msg._id} isMe={isMe} />}
@@ -299,11 +327,12 @@ const ChatMessages = ({ onEdit }: ChatMessagesProps) => {
       )}
       {(!atBottom || unreadCount > 0) && (
         <button
+          className='fixed bottom-20 left-[50%] z-30  h-10 w-10 flex items-center justify-center p-1 rounded-full
+                     bg-blue-900 text-white  hover:bg-blue-800 cursor-pointer shadow-lg shadow-blue-600/50 '
           onClick={() => {
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });
             dispatch(clearUnRead(selectedContact._id));
           }}
-          className='fixed bottom-20 left-[50%] z-30  h-10 w-10 flex items-center justify-center p-1 rounded-full bg-blue-900 text-white  hover:bg-blue-800 cursor-pointer shadow-lg shadow-blue-600/50 '
         >
           {unreadCount > 0 && (
             <span className='absolute -top-2 -right-1 flex w-5 h-5 items-center justify-center p-1 rounded-full bg-red-600 text-white text-xs'>

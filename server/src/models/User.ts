@@ -25,7 +25,7 @@ export enum AuthProvider {
 // the shape of a user document in MongoDB
 export interface IUser {
   name: string;
-  email?: string | undefined; 
+  email?: string | undefined;
   password?: string | undefined; // hashed; undefined for OAuth-only users
   avatar?: string | undefined; // Cloudinary URL
   avatarPublicId?: string | undefined; // Cloudinary ID (needed for deletion)
@@ -58,6 +58,8 @@ export interface IUser {
   deletedAt?: Date | undefined; // soft-delete timestamp (for future "restore account")
   role: UserRole;
   fcmToken?: string | undefined;
+
+  lastSeen?: Date;
 }
 
 // custom methods attached to every user document
@@ -224,6 +226,10 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
     fcmToken: {
       type: String,
       select: false,
+    },
+    lastSeen: {
+      type: Date,
+      default: null,
     },
     // if set, the account is "deleted" (soft-delete); the doc stays in DB but is excluded from indexes
     deletedAt: Date,
@@ -442,7 +448,10 @@ userSchema.methods.changePassword = async function (
   // check if the old password matches the stored hash
   const isMatch = await this.comparePassword(password);
   if (!isMatch) {
-    throw new CustomError("Current password incorrect", StatusCodes.UNAUTHORIZED);
+    throw new CustomError(
+      "Current password incorrect",
+      StatusCodes.UNAUTHORIZED,
+    );
   }
   // assign the new plain password — the pre-save hook will hash it automatically
   this.password = newPassword;

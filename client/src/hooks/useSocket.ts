@@ -5,7 +5,11 @@ import {
   type RawMessage,
 } from "../features/messages/messageEndpoints";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
-import { setOnlineUsers, unReadMessage } from "../features/users/usersSlice";
+import {
+  setOnlineUsers,
+  unReadMessage,
+  setLastSeen,
+} from "../features/users/usersSlice";
 import {
   addMessage,
   readMessage,
@@ -44,6 +48,7 @@ const useSocket = () => {
     if (!isAuthenticated || !userId) {
       if (socket.connected || isSetup.current) {
         socket.off("users:online");
+        socket.off("users:lastSeen");
         socket.off("message:new");
         socket.off("messages:read");
         socket.off("message:delete");
@@ -67,6 +72,10 @@ const useSocket = () => {
     if (!isSetup.current) {
       socket.on("users:online", (userIds: string[]) => {
         dispatch(setOnlineUsers(userIds));
+      });
+
+      socket.on("users:lastSeen", ({ userId, lastSeen }) => {
+        dispatch(setLastSeen({ userId, lastSeen }));
       });
 
       socket.on("message:new", (message: RawMessage) => {
@@ -100,6 +109,22 @@ const useSocket = () => {
             console.log("Audio play blocked until user interacts");
           });
         }
+
+        // the server sends senderId populated (an object), but the type allows a plain string
+        const senderName =
+          typeof message.senderId === "object"
+            ? message.senderId.name
+            : "New message";
+
+        // tab is hidden → show an OS notification (the socket got the message, so no push arrives)
+        if (document.hidden && Notification.permission === "granted") {
+          navigator.serviceWorker.ready.then((reg) =>
+            reg.showNotification(senderName, {
+              body: normalizedMessage.content?.slice(0, 20) || "New attachment",
+              tag: `msg-${normalizedMessage._id}`,
+            }),
+          );
+        }
       });
 
       socket.on("messages:read", ({ by }: { by: string }) => {
@@ -108,10 +133,12 @@ const useSocket = () => {
 
       socket.on("message:update", (data: Message) => {
         dispatch(editMessage(data));
+        dispatch(usersApi.util.invalidateTags(["Contacts"])); // refreshes the preview
       });
 
       socket.on("message:delete", ({ messageId }: { messageId: string }) => {
         dispatch(removeMessage(messageId));
+        dispatch(usersApi.util.invalidateTags(["Contacts"])); // refreshes the preview
       });
 
       socket.on("message:reaction", ({ messageId, reactions }) => {
@@ -134,6 +161,7 @@ const useSocket = () => {
     return () => {
       if (isSetup.current) {
         socket.off("users:online");
+        socket.off("users:lastSeen");
         socket.off("message:new");
         socket.off("messages:read");
         socket.off("message:delete");

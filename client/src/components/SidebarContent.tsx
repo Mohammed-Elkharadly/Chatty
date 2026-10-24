@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "../app/hooks";
 import { useLazySearchUsersQuery } from "../features/users/usersEndpoints";
 import { setSelectedContact } from "../features/users/usersSlice";
-import type { Contact } from "../features/users/users.types";
+import type { Contact, LastMessage } from "../features/users/users.types";
 import { useGetChatHistoryQuery } from "../features/users/usersEndpoints";
 import { setContacts, seedUnread } from "../features/users/usersSlice";
 interface SidebarContentProps {
@@ -19,7 +19,11 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
     (state) => state.users.selectedContact,
   );
 
-  const { data: newContact } = useGetChatHistoryQuery();
+  const myId = useAppSelector((state) => state.auth.user?.id);
+
+  const { data: newContact } = useGetChatHistoryQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -80,6 +84,21 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
       .sort((a, b) => lastTime(b) - lastTime(a)); // newest chat first
   }, [search, searchData, contacts]);
 
+  // text shown under the contact name
+  const previewText = (message: LastMessage) => {
+    if (message.content) return message.content;
+    switch (message.attachmentType) {
+      case "image":
+        return "📷 Photo";
+      case "video":
+        return "🎥 Video";
+      case "audio":
+        return "🎤 Voice message";
+      default:
+        return "📄 File";
+    }
+  };
+
   return (
     <>
       <div className='flex-1 overflow-y-auto p-2 no-scrollbar'>
@@ -99,7 +118,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
             <button
               key={contact._id}
               type='button'
-              className={`flex w-full items-center rounded-sm bg-[#191e24] hover:bg-blue-900 px-2 py-1 mb-2 cursor-pointer shadow-sm shadow-black ring-2'
+              className={`flex w-full items-center rounded-sm bg-[#191e24] hover:bg-blue-900 px-2 py-1 mb-2 shadow-sm shadow-black
                 ${isOpen ? "gap-3" : "justify-center"}
                 ${selectedContact?._id === contact._id ? " bg-blue-950" : ""}`}
               onClick={() => {
@@ -130,7 +149,20 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
                   ${onlineUsers.includes(contact._id) ? "bg-success" : "bg-gray-400"}`}
                 ></span>
                 {isOpen && (
-                  <span className='truncate text-sm'>{contact.name}</span>
+                  <div className='min-w-0 text-left'>
+                    <p className='truncate text-sm'>{contact.name}</p>
+
+                    {contact.lastMessage && (
+                      <p className='truncate text-sm text-gray-500'>
+                        {contact.lastMessage.senderId === myId
+                          ? "You: "
+                          : "Him: "}
+                        {previewText(contact.lastMessage).length >= 10
+                          ? `${previewText(contact.lastMessage).substring(0, 7)}...`
+                          : previewText(contact.lastMessage)}
+                      </p>
+                    )}
+                  </div>
                 )}
                 {/** unread counts */}
                 {unReadCounts[contact._id] > 0 && (
