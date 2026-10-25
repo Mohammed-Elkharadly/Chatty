@@ -101,10 +101,11 @@ const useVoiceRecorder = () => {
         setSeconds((second) => second + 1);
       }, 1000);
     } catch (error) {
-      stream.getTracks().forEach((track) => track.stop());
+      cleanup();
+      stream.getTracks().forEach((t) => t.stop());
       throw error;
     }
-  }, []);
+  }, [cleanup]);
 
   const stop = useCallback(
     () =>

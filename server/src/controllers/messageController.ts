@@ -259,22 +259,25 @@ export const sendMessage = async (req: Request, res: Response) => {
     );
   } else {
     // user is offline -> send a push notification via FCM
-    const receiver = await User.findById(receiverId).select("+fcmToken");
-    if (receiver?.fcmToken) {
+    const receiver = await User.findById(receiverId).select("+fcmTokens");
+    if (receiver?.fcmTokens?.length) {
       try {
-        await messaging.send({
-          token: receiver.fcmToken,
-          notification: {
-            title: "new message",
-            body: content?.substring(0, 20) || "new attachment",
-          },
-          data: {
-            messageId: newMessage._id.toString(),
-            type: "message",
-          },
-          // clicking the notification opens the app
-          webpush: { fcmOptions: { link: ENV.CLIENT_URL } },
-        });
+        await messaging.sendEach(
+          receiver.fcmTokens.map((token) => ({
+            token,
+            notification: {
+              title: "new message",
+              body: content?.substring(0, 20) || "new attachment",
+            },
+            data: {
+              messageId: newMessage._id.toString(),
+              type: "message",
+            },
+            webpush: {
+              fcmOptions: { link: ENV.CLIENT_URL },
+            },
+          })),
+        );
       } catch (error: any) {
         // token is dead (browser data cleared / permission revoked) → forget it
         if (error?.code === "messaging/registration-token-not-registered") {
@@ -588,7 +591,7 @@ export const reactToMessage = async (req: Request, res: Response) => {
   }
 
   // emoji must be a non-empty string, max 8 chars
-  if (!emoji || typeof emoji !== "string" || emoji.length > 8) {
+  if (!emoji || typeof emoji !== "string" || emoji.length > 11) {
     throw new CustomError("invalid emoji", StatusCodes.BAD_REQUEST);
   }
 

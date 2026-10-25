@@ -15,8 +15,13 @@ firebase.initializeApp({
 
 // background pushes with a `notification` payload are shown automatically
 firebase.messaging().onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
+  // Firebase displays notification payloads automatically
+  if (payload.notification) return;
+
+  // Custom notification for data-only messages
+  self.registration.showNotification(payload.data.title, {
+    body: payload.data.body,
     icon: "/icon.png",
   });
 });
+

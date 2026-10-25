@@ -26,7 +26,8 @@ const ChatHeader = ({ onJump }: ChatHeaderProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [term, setTerm] = useState("");
 
-  const [triggerSearch, { data, isFetching }] = useLazySearchInMessageQuery();
+  const [triggerSearch, { currentData, originalArgs, isFetching }] =
+    useLazySearchInMessageQuery();
 
   const query = term.trim();
   const contactId = selectedContact?._id;
@@ -43,7 +44,12 @@ const ChatHeader = ({ onJump }: ChatHeaderProps) => {
   if (!selectedContact) return null;
 
   const isOnline = onlineUsers.includes(selectedContact?._id);
-  const showResults = searchOpen && query.length >= 2 && !isFetching;
+  const canShowResults =
+    searchOpen &&
+    query.length >= 2 &&
+    !isFetching &&
+    originalArgs?.userId === contactId &&
+    originalArgs?.queryTerm === query;
 
   const lastSeen = selectedContact?.lastSeen;
 
@@ -133,11 +139,11 @@ const ChatHeader = ({ onJump }: ChatHeaderProps) => {
           {isFetching && (
             <p className='p-3 text-xs text-gray-400'>Searching...</p>
           )}
-          {showResults && data?.messages.length === 0 && (
+          {canShowResults && currentData?.messages.length === 0 && (
             <p className='p-3 text-xs text-gray-400'>No messages found</p>
           )}
-          {showResults &&
-            data?.messages.map((msg) => (
+          {canShowResults &&
+            currentData?.messages.map((msg) => (
               <button
                 key={msg._id}
                 type='button'

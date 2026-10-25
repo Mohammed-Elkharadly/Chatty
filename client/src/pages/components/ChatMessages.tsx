@@ -52,6 +52,7 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
   const lastScrollTopRef = useRef(0);
   // message shown with a ring for a moment after a jump
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [olderLoadError, setOlderLoadError] = useState(false);
 
   const dispatch = useAppDispatch();
 
@@ -79,26 +80,37 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
 
   const loadOlderMessages = useCallback(() => {
     const element = elementHeightRef.current;
+
     if (
       !element ||
       !selectedContact ||
       !hasMore ||
       isLoadingOlder ||
+      olderLoadError ||
       !messages.length
     )
       return;
 
-    prevHeightRef.current = element?.scrollHeight;
+    prevHeightRef.current = element.scrollHeight;
 
     loadOlder({
       userId: selectedContact._id,
       oldestMessagesId: messages[0]._id,
     })
       .unwrap()
+      .then(() => setOlderLoadError(false))
       .catch(() => {
-        prevHeightRef.current = null; // failed, nothing to restore
+        prevHeightRef.current = null;
+        setOlderLoadError(true);
       });
-  }, [selectedContact, hasMore, isLoadingOlder, messages, loadOlder]);
+  }, [
+    selectedContact,
+    hasMore,
+    isLoadingOlder,
+    olderLoadError,
+    messages,
+    loadOlder,
+  ]);
 
   // after older messages are added, move scroll down by the added height
   useLayoutEffect(() => {
@@ -208,6 +220,15 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
     >
       {isLoadingOlder && (
         <span className='loading loading-spinner loading-sm mx-auto' />
+      )}
+      {olderLoadError && (
+        <button
+          type='button'
+          onClick={() => setOlderLoadError(false)}
+          className='btn btn-sm mx-auto'
+        >
+          Retry loading older messages
+        </button>
       )}
       {messages.length === 0 ? (
         <p className='mt-4 text-center text-sm text-gray-400'>

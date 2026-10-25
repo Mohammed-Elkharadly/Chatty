@@ -156,7 +156,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
                       <p className='truncate text-sm text-gray-500'>
                         {contact.lastMessage.senderId === myId
                           ? "You: "
-                          : "Him: "}
+                          : `${contact.name}`}
                         {previewText(contact.lastMessage).length >= 10
                           ? `${previewText(contact.lastMessage).substring(0, 7)}...`
                           : previewText(contact.lastMessage)}

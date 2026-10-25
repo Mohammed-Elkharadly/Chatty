@@ -57,7 +57,7 @@ export interface IUser {
   isActive: boolean; // false = deactivated/banned
   deletedAt?: Date | undefined; // soft-delete timestamp (for future "restore account")
   role: UserRole;
-  fcmToken?: string | undefined;
+  fcmTokens?: string[] | undefined;
 
   lastSeen?: Date;
 }
@@ -223,8 +223,8 @@ const userSchema = new Schema<IUser, IUserModel, IUserMethods>(
       type: Boolean,
       default: true,
     },
-    fcmToken: {
-      type: String,
+    fcmTokens: {
+      type: [String],
       select: false,
     },
     lastSeen: {

@@ -71,7 +71,7 @@ const reactionSchema = new Schema<IReactions>(
     emoji: {
       type: String,
       required: true,
-      maxLength: 8,
+      maxLength: 11,
     },
   },
   { _id: false },

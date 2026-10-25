@@ -103,7 +103,7 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key !== "Enter") return;
+    if (e.key !== "Enter" || e.shiftKey) return;
     if (e.nativeEvent.isComposing || isPending) return;
     if (isEditing) {
       handleUpdate();
@@ -130,9 +130,10 @@ const ChatInput = ({ editingId, setEditingId }: ChatInputProps) => {
     const formData = new FormData();
     formData.append("attachment", voice);
     try {
-      await sendMessage({ receiverId: selectedContact._id, formData });
+      await sendMessage({ receiverId: selectedContact._id, formData }).unwrap();
     } catch (error) {
       console.error("Failed to send voice message", error);
+      toast.error("Failed to send voice message");
     }
   };
 

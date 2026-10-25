@@ -159,13 +159,13 @@ export const initSocketServer = (
         .then(async ({ wentOffline, onlineUserIds }) => {
           if (!wentOffline) return;
 
+          localIo.emit("users:online", onlineUserIds);
+
           const lastSeen = new Date();
 
           await User.findByIdAndUpdate(userId, { lastSeen });
 
-          localIo.emit("users:online", onlineUserIds);
-
-          localIo.emit("user:lastSeen", {
+          localIo.emit("users:lastSeen", {
             userId,
             lastSeen: lastSeen.toISOString(),
           });

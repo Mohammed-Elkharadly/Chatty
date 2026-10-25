@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useOAuthLoginMutation } from "../../features/auth/authEndpoints";
 import { useNavigate } from "react-router-dom";
 
 const GoogleAuthButton = () => {
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
   const [oAuthLogin] = useOAuthLoginMutation();
 
@@ -16,6 +18,7 @@ const GoogleAuthButton = () => {
         theme='outline'
         onSuccess={async (credentialResponse) => {
           if (!credentialResponse.credential) return;
+          setErrorMessage("");
           try {
             await oAuthLogin({
               provider: "google",
@@ -24,10 +27,18 @@ const GoogleAuthButton = () => {
             navigate("/");
           } catch (error) {
             console.error("failed to login", error);
+            setErrorMessage("Google sign-in failed. Please try again.");
           }
         }}
-        onError={() => console.error("failed login with google")}
+        onError={() =>
+          setErrorMessage("Google sign-in failed. Please try again.")
+        }
       />
+      {errorMessage && (
+        <p role='alert' className='mt-2 text-sm text-error'>
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 };
