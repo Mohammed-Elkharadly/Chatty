@@ -67,7 +67,7 @@ const reactionSchema = new Schema<IReactions>(
       ref: "User",
       required: true,
     },
-    // the emoji string (max 8 chars covers most emoji including ZWJ sequences)
+    // the emoji string (max 11 chars covers most emoji including ZWJ sequences)
     emoji: {
       type: String,
       required: true,

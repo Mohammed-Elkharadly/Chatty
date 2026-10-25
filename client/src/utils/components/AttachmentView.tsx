@@ -10,6 +10,7 @@ const AttachmentView = ({ attachment }: { attachment: Attachment }) => {
     return (
       <a href={url} target='_blank' rel="noreferrer">
         <img
+        src={url}
           alt={fileName}
           className='mt-1 mb-2 ml-1 pr-5 max-h-64 max-w-full'
         />

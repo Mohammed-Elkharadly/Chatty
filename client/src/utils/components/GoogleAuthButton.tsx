@@ -9,7 +9,7 @@ const GoogleAuthButton = () => {
   const [oAuthLogin] = useOAuthLoginMutation();
 
   return (
-    <div className='flex w-full justify-center'>
+    <div className='flex w-full flex-col items-center'>
       <GoogleLogin
         width='320'
         size='large'

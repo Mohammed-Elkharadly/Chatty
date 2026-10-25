@@ -262,8 +262,10 @@ export const sendMessage = async (req: Request, res: Response) => {
     const receiver = await User.findById(receiverId).select("+fcmTokens");
     if (receiver?.fcmTokens?.length) {
       try {
-        await messaging.sendEach(
-          receiver.fcmTokens.map((token) => ({
+        const tokens = receiver.fcmTokens;
+
+        const response = await messaging.sendEach(
+          tokens.map((token) => ({
             token,
             notification: {
               title: "new message",
@@ -278,14 +280,23 @@ export const sendMessage = async (req: Request, res: Response) => {
             },
           })),
         );
-      } catch (error: any) {
-        // token is dead (browser data cleared / permission revoked) → forget it
-        if (error?.code === "messaging/registration-token-not-registered") {
+
+        const invalidTokens = response.responses
+          .map((result, index) =>
+            !result.success &&
+            result.error?.code === "messaging/registration-token-not-registered"
+              ? tokens[index]
+              : null,
+          )
+          .filter((token): token is string => token !== null);
+
+        if (invalidTokens.length > 0) {
           await User.updateOne(
             { _id: receiverId },
-            { $unset: { fcmToken: 1 } },
+            { $pull: { fcmTokens: { $in: invalidTokens } } },
           );
         }
+      } catch (error) {
         console.error("FCM send failed", error);
       }
     }
