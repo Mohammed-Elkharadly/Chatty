@@ -260,10 +260,14 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
               >
                 <div className='flex items-start justify-between'>
                   {/* Message Content & Media */}
-                  {msg.attachment && (
-                    <AttachmentView attachment={msg.attachment} />
-                  )}
-                  {msg.content && <p className='wrap-anywhere'>{msg.content}</p>}
+                  <div className='flex flex-col'>
+                    {msg.attachment && (
+                      <AttachmentView attachment={msg.attachment} />
+                    )}
+                    {msg.content && (
+                      <p className='wrap-anywhere'>{msg.content}</p>
+                    )}
+                  </div>
 
                   {/* Options Menu Button for User Messages */}
                   {isMe && (

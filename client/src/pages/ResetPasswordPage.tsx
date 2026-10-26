@@ -36,7 +36,7 @@ const ResetPasswordPage = () => {
             <p className='text-sm mb-4'>
               This reset link is missing its token.
             </p>
-            <Link to='/forgot-password' className='linktext-white hover:text-black'>
+            <Link to='/forgot-password' className='text-white hover:text-black'>
               Request a new one
             </Link>
           </div>
