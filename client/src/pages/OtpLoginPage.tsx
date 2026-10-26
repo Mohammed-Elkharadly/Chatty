@@ -52,7 +52,7 @@ export const OtpLoginPage = () => {
 
   return (
     <main className='flex min-h-screen items-center justify-center bg-slate-900'>
-      <div className='card w-96 bg-blue-900/25 shadow-xl'>
+      <div className='card w-96 bg-[#1e1584]'>
         <div className='card-body'>
           <h2 className='mb-4 card-title text-2xl font-bold'>
             Sign in with Code
@@ -146,7 +146,7 @@ export const OtpLoginPage = () => {
           )}
 
           <p className='mt-4 text-center text-md'>
-            <Link to='/login' className='link link-primary'>
+            <Link to='/login' className='link text-white hover:text-black'>
               Back to Login
             </Link>
           </p>

@@ -122,7 +122,7 @@ const SettingsPage = () => {
     <div className='h-screen flex items-start justify-center py-10 px-4 bg-slate-900 overflow-auto no-scrollbar'>
       <div className='flex flex-col gap-6 w-full max-w-md '>
         {/* --- Profile --- */}
-        <div className='card shadow-xl  bg-blue-600/25 rounded-2xl'>
+        <div className='card shadow-xl  bg-[#1e1584] rounded-2xl'>
           <div className='card-body '>
             <h2 className='card-title mb-2'>Profile</h2>
 
@@ -216,7 +216,7 @@ const SettingsPage = () => {
         </div>
 
         {/* --- Change Password --- */}
-        <div className='card shadow-xl  bg-blue-600/25 rounded-2xl'>
+        <div className='card shadow-xl bg-[#1e1584] rounded-2xl'>
           <div className='card-body'>
             <h2 className='card-title mb-2'>Change Password</h2>
 

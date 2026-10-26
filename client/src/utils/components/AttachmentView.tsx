@@ -8,32 +8,16 @@ const AttachmentView = ({ attachment }: { attachment: Attachment }) => {
 
   if (type === "image") {
     return (
-      <a href={url} target='_blank' rel="noreferrer">
-        <img
-        src={url}
-          alt={fileName}
-          className='mt-1 mb-2 ml-1 pr-5 max-h-64 max-w-full'
-        />
+      <a href={url} target='_blank' rel='noreferrer'>
+        <img src={url} alt={fileName} className='max-h-64 max-w-full' />
       </a>
     );
   }
   if (type === "video") {
-    return (
-      <video
-        src={url}
-        controls
-        className='mt-1 mb-2 ml-1 pr-5 max-h-64 max-w-full'
-      />
-    );
+    return <video src={url} controls className=' max-h-64 max-w-full' />;
   }
   if (type === "audio") {
-    return (
-      <audio
-        src={url}
-        controls
-        className='mt-1 mb-2 ml-1 pr-5 h-9 max-w-full'
-      />
-    );
+    return <audio src={url} controls className='h-9 max-w-full' />;
   }
 
   // pdf / document: compact download chip

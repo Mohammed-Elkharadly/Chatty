@@ -118,7 +118,7 @@ const SidebarContent = ({ isOpen, search, setSearch }: SidebarContentProps) => {
             <button
               key={contact._id}
               type='button'
-              className={`flex w-full items-center rounded-sm bg-[#191e24] hover:bg-blue-900 px-2 py-1 mb-2 shadow-sm shadow-black
+              className={`flex w-full items-center rounded-sm bg-[#191e24] hover:bg-[#1e1584] px-2 py-1 mb-2 shadow-sm shadow-black
                 ${isOpen ? "gap-3" : "justify-center"}
                 ${selectedContact?._id === contact._id ? " bg-blue-950" : ""}`}
               onClick={() => {

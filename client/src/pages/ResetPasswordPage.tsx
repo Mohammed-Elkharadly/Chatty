@@ -30,13 +30,13 @@ const ResetPasswordPage = () => {
   if (!token) {
     return (
       <main className='flex min-h-screen items-center justify-center  bg-slate-900'>
-        <div className='card w-96  bg-slate-900/25 shadow-xl'>
+        <div className='card w-96  bg-[#1e1584]'>
           <div className='card-body'>
             <h2 className='card-title text-2xl font-bold mb-4'>Invalid Link</h2>
             <p className='text-sm mb-4'>
               This reset link is missing its token.
             </p>
-            <Link to='/forgot-password' className='link link-primary'>
+            <Link to='/forgot-password' className='linktext-white hover:text-black'>
               Request a new one
             </Link>
           </div>
@@ -47,7 +47,7 @@ const ResetPasswordPage = () => {
 
   return (
     <main className='flex min-h-screen items-center justify-center bg-slate-900'>
-      <div className='card w-96 bg-blue-900/25 shadow-xl rounded-xl'>
+      <div className='card w-96 bg-[#1e1584] shadow-xl rounded-xl'>
         <div className='card-body'>
           <h2 className='mb-4 card-title text-2xl font-bold'>Reset Password</h2>
 

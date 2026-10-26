@@ -22,7 +22,7 @@ const VerifyEmailPage = () => {
 
   return (
     <main className='flex min-h-screen items-center justify-center bg-slate-900'>
-      <div className='card w-96 bg-blue-900/25 shadow-xl'>
+      <div className='card w-96 bg-[#1e1584]'>
         <div className='card-body'>
           {isSuccess ? (
             <>

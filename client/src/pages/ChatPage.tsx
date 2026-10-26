@@ -37,7 +37,7 @@ const ChatPage = () => {
           <button
             type='button'
             title='show sidebar contact'
-            className='btn btn-square hover:bg-blue-900 w-50 text-xl'
+            className='btn btn-square bg-[#1e1584] w-50 text-xl'
             onClick={() => setIsHidden((prev) => !prev)}
             aria-label='Show sidebar'
           >

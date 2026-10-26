@@ -66,7 +66,7 @@ const ChatHeader = ({ onJump }: ChatHeaderProps) => {
         <button
           type='button'
           title='show sidebar contact'
-          className='btn bg-[#191e24] btn-sm border border-[#0000007d] btn-square hover:bg-blue-900'
+          className='btn bg-[#191e24] btn-sm border border-[#0000007d] btn-square hover:bg-[#1e1584]'
           onClick={() => setIsHidden((prev) => !prev)}
           aria-label='Show sidebar'
         >
@@ -126,7 +126,7 @@ const ChatHeader = ({ onJump }: ChatHeaderProps) => {
           type='button'
           title='search for a message'
           aria-label={searchOpen ? "close search" : "search messages"}
-          className='btn bg-[#191e24] border border-[#0000007d] hover:bg-blue-900 btn-sm btn-square'
+          className='btn bg-[#191e24] border border-[#0000007d] hover:bg-[#1e1584] btn-sm btn-square'
           onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
         >
           <FontAwesomeIcon icon={searchOpen ? faXmark : faMagnifyingGlass} />

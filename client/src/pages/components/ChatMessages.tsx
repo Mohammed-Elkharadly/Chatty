@@ -244,7 +244,7 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
             <div
               key={msg._id}
               id={`msg-${msg._id}`}
-              className={`relative flex items-center gap-2 rounded-xl transition ${
+              className={`relative flex items-center ${
                 isMe ? "justify-end" : "justify-start"
               } ${highlightId === msg._id ? "ring-2 ring-yellow-400" : ""}`}
             >
@@ -252,67 +252,59 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
               {!isMe && <ReactionPicker messageId={msg._id} isMe={isMe} />}
 
               <div
-                className={`relative max-w-xs rounded-xl p-2 text-sm wrap-break-word shadow-sm lg:max-w-md ${
+                className={`relative max-w-xs mt-3 rounded-md p-2 text-sm shadow-sm lg:max-w-md ${
                   isMe
-                    ? "bg-blue-900 text-white rounded-br-none"
+                    ? "bg-[#1e1584] text-white rounded-br-none"
                     : "bg-gray-800 text-gray-100 rounded-bl-none"
                 }`}
               >
-                {/* Options Menu Button for User Messages */}
-                {isMe && (
-                  <div
-                    className='absolute top-2 right-2'
-                    ref={isMenuOpen ? menuRef : null}
-                  >
-                    <button
-                      type='button'
-                      className='cursor-pointer text-blue-200 hover:text-white transition-colors'
-                      aria-label='options'
-                      onClick={() => setOpenMenuId(isMenuOpen ? null : msg._id)}
-                    >
-                      <FontAwesomeIcon icon={faEllipsisVertical} />
-                    </button>
-                    {isMenuOpen && (
-                      <div className='absolute -top-2 right-5 z-50 flex w-28 flex-col gap-1.5 rounded border border-gray-700 bg-gray-800 p-1.5 shadow-md'>
-                        <button
-                          type='button'
-                          aria-label='update message'
-                          className='flex w-full cursor-pointer items-center justify-evenly gap-2 text-gray-100 hover:text-yellow-600'
-                          onClick={() => {
-                            setOpenMenuId(null);
-                            onEdit(msg._id);
-                          }}
-                        >
-                          <span>Update</span>
-                          <FontAwesomeIcon icon={faPenToSquare} />
-                        </button>
-                        <DeleteMessage isOpen={isMenuOpen} message={msg} />
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className='flex items-start justify-between'>
+                  {/* Message Content & Media */}
+                  {msg.attachment && (
+                    <AttachmentView attachment={msg.attachment} />
+                  )}
+                  {msg.content && <p className='wrap-anywhere'>{msg.content}</p>}
 
-                {/* Message Content & Media */}
-                {msg.attachment && (
-                  <AttachmentView attachment={msg.attachment} />
-                )}
-                {msg.content && <p className='pr-5'>{msg.content}</p>}
+                  {/* Options Menu Button for User Messages */}
+                  {isMe && (
+                    <div className='' ref={isMenuOpen ? menuRef : null}>
+                      <button
+                        type='button'
+                        className='cursor-pointer text-blue-200 hover:text-white transition-colors'
+                        aria-label='options'
+                        onClick={() =>
+                          setOpenMenuId(isMenuOpen ? null : msg._id)
+                        }
+                      >
+                        <FontAwesomeIcon icon={faEllipsisVertical} />
+                      </button>
+                      {isMenuOpen && (
+                        <div className='absolute -top-2 right-5 z-50 flex w-28 flex-col gap-1.5 rounded border border-gray-700 bg-gray-800 p-1.5 shadow-md'>
+                          <button
+                            type='button'
+                            aria-label='update message'
+                            className='flex w-full cursor-pointer items-center justify-evenly gap-2 text-gray-100 hover:text-yellow-600'
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              onEdit(msg._id);
+                            }}
+                          >
+                            <span>Update</span>
+                            <FontAwesomeIcon icon={faPenToSquare} />
+                          </button>
+                          <DeleteMessage isOpen={isMenuOpen} message={msg} />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Footer Metadata (Timestamp & Read Status) */}
-                <div className='mt-1.5 flex items-center justify-end gap-1 text-[11px] opacity-75'>
-                  <span>
-                    {formatTime.format(
-                      new Date(isEdited ? msg.updatedAt : msg.createdAt),
-                    )}
-                  </span>
-                  {isEdited && (
-                    <span className='italic text-[10px] text-yellow-400'>
-                      (edited)
-                    </span>
-                  )}
-
+                <div
+                  className={`mt-1.5 -mb-1 flex items-center ${isMe ? "justify-start" : "justify-end"} gap-1 text-[11px] opacity-75`}
+                >
                   {isMe && (
-                    <span className='ml-1 text-xs'>
+                    <span className='text-xs'>
                       {msg.status === "seen" ? (
                         <span className='text-green-400'>
                           <FontAwesomeIcon icon={faCheckDouble} />
@@ -328,12 +320,24 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
                       )}
                     </span>
                   )}
+
+                  {isEdited && (
+                    <span className='italic text-[10px] text-yellow-400 mr-1'>
+                      updated
+                    </span>
+                  )}
+
+                  <span>
+                    {formatTime.format(
+                      new Date(isEdited ? msg.updatedAt : msg.createdAt),
+                    )}
+                  </span>
                 </div>
 
                 {/* Reactions Badge */}
                 {msg.reactions && msg.reactions.length > 0 && (
                   <div
-                    className={`absolute -bottom-3 ${isMe ? "right-2" : "left-2"}`}
+                    className={`absolute -bottom-4.5 ${isMe ? "left-0" : "right-0"}`}
                   >
                     <ReactionBar reactions={msg.reactions} />
                   </div>

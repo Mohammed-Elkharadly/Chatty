@@ -18,7 +18,7 @@ const SidebarFooter = ({ isOpen }: { isOpen: boolean }) => {
         <Link
           to='/settings'
           aria-label='settings'
-          className='btn btn-sm w-full justify-start gap-3 hover:bg-blue-900'
+          className='btn btn-sm w-full justify-start gap-3 hover:bg-[#1e1584]'
         >
           <FontAwesomeIcon icon={faGear} size='lg' />
           {isOpen && <span>Settings</span>}
