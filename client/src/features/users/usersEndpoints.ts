@@ -31,10 +31,11 @@ export const usersApi = apiQuery.injectEndpoints({
         `/messages/search?query=${encodeURIComponent(searchTerm)}`,
     }),
     // logoutUser: Ends the session on the server and clears everything locally.
-    logoutUser: builder.mutation<{ message: string }, void>({
-      query: () => ({
+    logoutUser: builder.mutation<{ message: string }, { fcmToken: string | null }>({
+      query: (body) => ({
         url: "/users/logout",
         method: "POST",
+        body,
       }),
       // onQueryStarted: runs immediately when logout triggered
       async onQueryStarted(_args, { dispatch, queryFulfilled }) {

@@ -293,7 +293,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         if (invalidTokens.length > 0) {
           await User.updateOne(
             { _id: receiverId },
-            { $pull: { fcmTokens: { $in: invalidTokens } } },
+            { $addToSet: { fcmTokens: { $in: invalidTokens } } },
           );
         }
       } catch (error) {

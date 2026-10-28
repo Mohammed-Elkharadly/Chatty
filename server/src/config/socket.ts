@@ -9,6 +9,7 @@ import redisClient from "./redis.js";
 import type { Redis } from "ioredis";
 import { Message } from "../models/Message.js";
 import { User } from "../models/User.js";
+import { messaging } from "./firebase.js";
 
 const parseCookieHeader = (header: string): Record<string, string> => {
   const result: Record<string, string> = {};
@@ -25,6 +26,7 @@ const ALLOWED_ORIGINS = [ENV.CLIENT_URL, ENV.SERVER_URL];
 const PRESENCE_TTL_SEC = 60 * 60 * 24; // presence key lifetime, refreshed while connected
 
 const presenceKey = (userId: string) => `presence:${userId}`;
+
 export const ONLINE_USER_IDS_KEY = "online_user_ids";
 
 export const getSocketsForUser = async (userId: string): Promise<string[]> =>
@@ -90,6 +92,7 @@ export const initSocketServer = (
         userId: string;
       };
       socket.data.userId = decoded.userId;
+      socket.data.fcmToken = socket.handshake.auth?.fcmToken;
       next();
     } catch (error) {
       next(new Error("Unauthorized"));
@@ -113,8 +116,40 @@ export const initSocketServer = (
     }
   };
 
+  const notifyUnreadOnConnect = async (userId: string, fcmToken?: string) => {
+    if (!fcmToken) return;
+
+    const user = await User.findOne({
+      _id: userId,
+      fcmTokens: fcmToken,
+    }).select("_id");
+
+    if (!user) return;
+
+    const unreadCount = await Message.countDocuments({
+      receiverId: userId,
+      senderId: { $ne: userId },
+      status: { $ne: "seen" },
+    });
+
+    if (!unreadCount) return;
+
+    await messaging.send({
+      token: fcmToken,
+      notification: {
+        title: "Chatty",
+        body: `You have ${unreadCount} unread message${unreadCount === 1 ? "" : "s"}.`,
+      },
+    });
+  };
+
   localIo.on("connection", (socket) => {
     const userId = socket.data.userId as string;
+
+    notifyUnreadOnConnect(
+      userId,
+      socket.data.fcmToken as string | undefined,
+    ).catch((error) => console.error("Unread notification failed:", error));
 
     addPresence(userId, socket.id)
       .then((onlineUserIds) => {

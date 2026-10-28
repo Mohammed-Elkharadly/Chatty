@@ -2,12 +2,14 @@ import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import { useLogoutUserMutation } from "../features/users/usersEndpoints";
+import { getFcmToken } from "../lib/firebase";
 
 const SidebarFooter = ({ isOpen }: { isOpen: boolean }) => {
   const [logoutUser, { isLoading: isLoggingOut }] = useLogoutUserMutation();
   const handleLogout = async () => {
     try {
-      await logoutUser().unwrap();
+      const fcmToken = await getFcmToken();
+      await logoutUser({ fcmToken }).unwrap();
     } catch (error) {
       console.error("failed logging out", error);
     }

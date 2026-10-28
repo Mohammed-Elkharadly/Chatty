@@ -13,11 +13,18 @@ const passRegEx = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
 
 // handles: POST /api/auth/logout — invalidates the session and clears cookies
 export const logout = async (req: Request, res: Response) => {
+  const { fcmToken } = req.body;
   // if the user is authenticated (verifyJwt middleware ran and attached req.user)
   if (req.user) {
     // remove the stored refresh token from the DB → all future refresh attempts will fail
     await req.user.invalidateRefreshToken();
     // no more pushes to this browser after logout
+    if (typeof fcmToken === "string" && fcmToken) {
+      await User.updateOne(
+        { _id: req.user._id },
+        { $pull: { fcmTokens: fcmToken } },
+      );
+    }
   }
   // clear both accessToken + refreshToken cookies from the browser
   TokenHandler.clearCookie(res);
@@ -268,7 +275,7 @@ export const notifications = async (req: Request, res: Response) => {
   }
 
   // save it to the user doc
-  await User.findByIdAndUpdate(userId, { fcmToken });
+  await User.findByIdAndUpdate(userId, { $addToSet: { fcmTokens: fcmToken } });
 
   res.status(200).json({ message: "Token stored" });
 };

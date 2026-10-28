@@ -260,7 +260,7 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
               >
                 <div className='flex items-start justify-between'>
                   {/* Message Content & Media */}
-                  <div className='flex flex-col'>
+                  <div className='flex flex-col gap-1.5'>
                     {msg.attachment && (
                       <AttachmentView attachment={msg.attachment} />
                     )}
@@ -274,7 +274,7 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
                     <div className='' ref={isMenuOpen ? menuRef : null}>
                       <button
                         type='button'
-                        className='cursor-pointer text-blue-200 hover:text-white transition-colors'
+                        className='cursor-pointer text-blue-200 hover:text-white transition-colors -mr-1.5'
                         aria-label='options'
                         onClick={() =>
                           setOpenMenuId(isMenuOpen ? null : msg._id)
@@ -310,11 +310,11 @@ const ChatMessages = ({ onEdit, jumpToId, setJumpToId }: ChatMessagesProps) => {
                   {isMe && (
                     <span className='text-xs'>
                       {msg.status === "seen" ? (
-                        <span className='text-green-400'>
+                        <span className='text-green-400 -ml-0.5'>
                           <FontAwesomeIcon icon={faCheckDouble} />
                         </span>
                       ) : msg.status === "delivered" ? (
-                        <span className='text-gray-300'>
+                        <span className='text-gray-300 -ml-0.5'>
                           <FontAwesomeIcon icon={faCheckDouble} />
                         </span>
                       ) : (
