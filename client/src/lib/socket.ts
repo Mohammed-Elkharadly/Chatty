@@ -14,6 +14,7 @@ let fcmToken: string | null = null;
 export const setSocketFcmToken = (token: string | null) => {
   fcmToken = token;
   socket.auth = { fcmToken };
+  
 };
 
 // A successful connection allows future refresh attempts.
